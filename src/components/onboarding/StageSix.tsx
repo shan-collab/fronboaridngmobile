@@ -157,7 +157,10 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
         <div className="border border-border rounded-xl bg-card p-3 space-y-1">
           {digiposteDocKeys.map(key => (
             <div key={key} className="flex items-center gap-2.5 py-1.5">
-              <Checkbox checked={!!data.digiposteDocsRead[key]} disabled />
+              <Checkbox
+                checked={!!data.digiposteDocsRead[key]}
+                onCheckedChange={() => handleUpdate({ digiposteDocsRead: { ...data.digiposteDocsRead, [key]: !data.digiposteDocsRead[key] } })}
+              />
               <PDFViewerDialog
                 title={t(key)}
                 trigger={
@@ -167,7 +170,6 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
                   </button>
                 }
                 showDownload
-                onAllPagesRead={() => handleDigiposteDocRead(key)}
               />
             </div>
           ))}
