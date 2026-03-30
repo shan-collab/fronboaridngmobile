@@ -122,7 +122,7 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
           <h3 className="font-semibold text-sm text-card-foreground">{t("provident_insurance")}</h3>
           <HelpIcon content={t("help_provident_insurance")} />
         </div>
-        <p className="text-[10px] text-muted-foreground">{t("read_all_pages_to_tick")}</p>
+        
         <div className="border border-border rounded-xl bg-card p-3 space-y-1">
           {providentDocKeys.map(key => (
             <div key={key} className="flex items-center gap-2.5 py-1.5">
