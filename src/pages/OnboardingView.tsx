@@ -1554,7 +1554,7 @@ const OnboardingView = () => {
           <div className="flex-1 p-4 overflow-y-auto h-[calc(100vh-60px)]">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-xs text-card-foreground">{t(sectionConfig[activeSection].labelKey)} {t("details")}</h2>
-              <StatusBadge status={approvalStatus} t={t} rejected={activeSection === 1 && hasRejectedIdentity} />
+              <StatusBadge status={approvalStatus} t={t} rejected={activeSection === 1 && hasRejectedDocs} />
             </div>
             <div className="bg-card rounded-xl border border-border p-3">
               {sectionContent[activeSection].view()}
