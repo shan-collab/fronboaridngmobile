@@ -12,9 +12,11 @@ interface MultiFileUploadProps {
   hint?: string;
   error?: string;
   sampleImage?: React.ReactNode;
+  compact?: boolean;
+  readOnly?: boolean;
 }
 
-const MultiFileUpload = ({ label, files, onFilesChange, accept = "image/*,.pdf", hint, error, sampleImage }: MultiFileUploadProps) => {
+const MultiFileUpload = ({ label, files, onFilesChange, accept = "image/*,.pdf", hint, error, sampleImage, compact, readOnly }: MultiFileUploadProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<Record<number, string>>({});
   const { t } = useLanguage();
