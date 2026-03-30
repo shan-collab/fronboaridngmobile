@@ -126,7 +126,10 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
         <div className="border border-border rounded-xl bg-card p-3 space-y-1">
           {providentDocKeys.map(key => (
             <div key={key} className="flex items-center gap-2.5 py-1.5">
-              <Checkbox checked={!!data.providentDocsRead[key]} disabled />
+              <Checkbox
+                checked={!!data.providentDocsRead[key]}
+                onCheckedChange={() => handleUpdate({ providentDocsRead: { ...data.providentDocsRead, [key]: !data.providentDocsRead[key] } })}
+              />
               <PDFViewerDialog
                 title={t(key)}
                 trigger={
@@ -136,7 +139,6 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
                   </button>
                 }
                 showDownload
-                onAllPagesRead={() => handleProvidentDocRead(key)}
               />
             </div>
           ))}
