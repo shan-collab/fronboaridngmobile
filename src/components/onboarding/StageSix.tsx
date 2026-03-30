@@ -10,21 +10,6 @@ import { useState, useMemo, useRef, useCallback } from "react";
 
 interface StageSixProps { onComplete: () => void; onBack: () => void; }
 
-const DocFileLink = ({ title }: { title: string }) => (
-  <div className="flex items-center justify-between py-1.5">
-    <PDFViewerDialog
-      title={title}
-      trigger={
-        <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1.5">
-          <ExternalLink className="w-3 h-3 shrink-0" />
-          {title}
-        </button>
-      }
-      showDownload
-    />
-  </div>
-);
-
 const StageSix = ({ onComplete, onBack }: StageSixProps) => {
   const { data, updateData } = useOnboarding();
   const { t } = useLanguage();
@@ -41,11 +26,32 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
     if (Object.keys(errors).length > 0) setErrors({});
   };
 
+  // Track which docs have been fully read
+  const providentDocKeys = ["provident_booklet", "provident_beneficiary", "provident_due"];
+  const digiposteDocKeys = ["action_logement_sheet", "digiposte_letter"];
+  const allProvidentRead = providentDocKeys.every(k => data.providentDocsRead[k]);
+  const allDigiposteRead = digiposteDocKeys.every(k => data.digiposteDocsRead[k]);
+  const ackRead = data.acknowledgementDocRead;
+  const allDocsRead = allProvidentRead && allDigiposteRead && ackRead;
+
+  const handleProvidentDocRead = (key: string) => {
+    handleUpdate({ providentDocsRead: { ...data.providentDocsRead, [key]: true } });
+  };
+
+  const handleDigiposteDocRead = (key: string) => {
+    handleUpdate({ digiposteDocsRead: { ...data.digiposteDocsRead, [key]: true } });
+  };
+
+  const handleAckDocRead = () => {
+    handleUpdate({ acknowledgementDocRead: true });
+  };
+
   const isValid = useMemo(() => {
     if (!signatureData) return false;
     if (!data.declarationAgreed) return false;
+    if (!allDocsRead) return false;
     return true;
-  }, [signatureData, data.declarationAgreed]);
+  }, [signatureData, data.declarationAgreed, allDocsRead]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -116,10 +122,24 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
           <h3 className="font-semibold text-sm text-card-foreground">{t("provident_insurance")}</h3>
           <HelpIcon content={t("help_provident_insurance")} />
         </div>
+        <p className="text-[10px] text-muted-foreground">{t("read_all_pages_to_tick")}</p>
         <div className="border border-border rounded-xl bg-card p-3 space-y-1">
-          <DocFileLink title={t("provident_booklet")} />
-          <DocFileLink title={t("provident_beneficiary")} />
-          <DocFileLink title={t("provident_due")} />
+          {providentDocKeys.map(key => (
+            <div key={key} className="flex items-center gap-2.5 py-1.5">
+              <Checkbox checked={!!data.providentDocsRead[key]} disabled />
+              <PDFViewerDialog
+                title={t(key)}
+                trigger={
+                  <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1.5">
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                    {t(key)}
+                  </button>
+                }
+                showDownload
+                onAllPagesRead={() => handleProvidentDocRead(key)}
+              />
+            </div>
+          ))}
         </div>
       </div>
 
@@ -133,8 +153,22 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
           <HelpIcon content={t("help_digiposte_logement")} />
         </div>
         <div className="border border-border rounded-xl bg-card p-3 space-y-1">
-          <DocFileLink title={t("action_logement_sheet")} />
-          <DocFileLink title={t("digiposte_letter")} />
+          {digiposteDocKeys.map(key => (
+            <div key={key} className="flex items-center gap-2.5 py-1.5">
+              <Checkbox checked={!!data.digiposteDocsRead[key]} disabled />
+              <PDFViewerDialog
+                title={t(key)}
+                trigger={
+                  <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1.5">
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                    {t(key)}
+                  </button>
+                }
+                showDownload
+                onAllPagesRead={() => handleDigiposteDocRead(key)}
+              />
+            </div>
+          ))}
         </div>
       </div>
 
@@ -148,89 +182,108 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
           <HelpIcon content={t("help_acknowledgement")} />
         </div>
         <div className="border border-border rounded-xl bg-card p-3 space-y-1">
-          <DocFileLink title={t("certificate_delivery")} />
+          <div className="flex items-center gap-2.5 py-1.5">
+            <Checkbox checked={ackRead} disabled />
+            <PDFViewerDialog
+              title={t("certificate_delivery")}
+              trigger={
+                <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1.5">
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  {t("certificate_delivery")}
+                </button>
+              }
+              showDownload
+              onAllPagesRead={handleAckDocRead}
+            />
+          </div>
         </div>
       </div>
 
       <div className="border-t border-border" />
 
-      {/* Employee Signature */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center"><PenTool className="w-3.5 h-3.5 text-primary" /></div>
-          <h3 className="font-semibold text-sm text-card-foreground">{t("employee_signature")}</h3>
-        </div>
-
-        {/* Review note */}
-        <div className="flex items-start gap-2 p-2.5 bg-amber-50 rounded-lg border border-amber-200">
-          <Info className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-          <p className="text-[10px] text-amber-700 leading-relaxed font-medium">{t("review_ack_before_signing")}</p>
-        </div>
-
-        <div className="bg-card rounded-xl border border-border p-3 space-y-3">
-          {/* Draw / Upload Toggle */}
-          <div className="grid grid-cols-2 rounded-lg border border-border overflow-hidden">
-            <button
-              onClick={() => setSignatureMode("draw")}
-              className={`flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
-                signatureMode === "draw" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
-              }`}
-            >
-              <PenTool className="w-3 h-3" /> {t("draw")}
-            </button>
-            <button
-              onClick={() => setSignatureMode("upload")}
-              className={`flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
-                signatureMode === "upload" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
-              }`}
-            >
-              <Upload className="w-3 h-3" /> {t("upload")}
-            </button>
+      {/* Employee Signature - only show when all docs are read */}
+      {allDocsRead && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center"><PenTool className="w-3.5 h-3.5 text-primary" /></div>
+            <h3 className="font-semibold text-sm text-card-foreground">{t("employee_signature")}</h3>
           </div>
 
-          {signatureMode === "draw" && (
-            <div className="space-y-2">
-              <div className="border border-border rounded-lg bg-muted/20 relative overflow-hidden">
-                <canvas
-                  ref={canvasRef}
-                  width={320}
-                  height={100}
-                  className="w-full touch-none cursor-crosshair"
-                  onMouseDown={startDraw}
-                  onMouseMove={draw}
-                  onMouseUp={endDraw}
-                  onMouseLeave={endDraw}
-                  onTouchStart={startDraw}
-                  onTouchMove={draw}
-                  onTouchEnd={endDraw}
-                />
-                {!signatureData && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-[10px] text-muted-foreground">{t("signature_will_appear")}</span>
+          {/* Review note */}
+          <div className="flex items-start gap-2 p-2.5 bg-amber-50 rounded-lg border border-amber-200">
+            <Info className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-amber-700 leading-relaxed font-medium">{t("review_ack_before_signing")}</p>
+          </div>
+
+          <div className="bg-card rounded-xl border border-border p-3 space-y-3">
+            {/* Draw / Upload Toggle */}
+            <div className="grid grid-cols-2 rounded-lg border border-border overflow-hidden">
+              <button
+                onClick={() => setSignatureMode("draw")}
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
+                  signatureMode === "draw" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                }`}
+              >
+                <PenTool className="w-3 h-3" /> {t("draw")}
+              </button>
+              <button
+                onClick={() => setSignatureMode("upload")}
+                className={`flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors ${
+                  signatureMode === "upload" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                }`}
+              >
+                <Upload className="w-3 h-3" /> {t("upload")}
+              </button>
+            </div>
+
+            {signatureMode === "draw" && (
+              <div className="space-y-2">
+                <div className="border border-border rounded-lg bg-muted/20 relative overflow-hidden">
+                  <canvas
+                    ref={canvasRef}
+                    width={320}
+                    height={100}
+                    className="w-full touch-none cursor-crosshair"
+                    onMouseDown={startDraw}
+                    onMouseMove={draw}
+                    onMouseUp={endDraw}
+                    onMouseLeave={endDraw}
+                    onTouchStart={startDraw}
+                    onTouchMove={draw}
+                    onTouchEnd={endDraw}
+                  />
+                  {!signatureData && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-[10px] text-muted-foreground">{t("signature_will_appear")}</span>
+                    </div>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" onClick={clearSignature} className="text-xs h-7">{t("clear")}</Button>
+              </div>
+            )}
+
+            {signatureMode === "upload" && (
+              <div className="space-y-2">
+                <label className="flex flex-col items-center gap-1.5 p-3 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/40 transition-colors">
+                  <Upload className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">{t("upload_signature")}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+                </label>
+                {signatureData && (
+                  <div className="border border-border rounded-lg p-2 bg-muted/20">
+                    <img src={signatureData} alt="Signature" className="max-h-16 mx-auto" />
                   </div>
                 )}
               </div>
-              <Button variant="outline" size="sm" onClick={clearSignature} className="text-xs h-7">{t("clear")}</Button>
-            </div>
-          )}
-
-          {signatureMode === "upload" && (
-            <div className="space-y-2">
-              <label className="flex flex-col items-center gap-1.5 p-3 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/40 transition-colors">
-                <Upload className="w-4 h-4 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground">{t("upload_signature")}</span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-              </label>
-              {signatureData && (
-                <div className="border border-border rounded-lg p-2 bg-muted/20">
-                  <img src={signatureData} alt="Signature" className="max-h-16 mx-auto" />
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
+          {errors.signature && <p className="text-[11px] text-destructive">{errors.signature}</p>}
         </div>
-        {errors.signature && <p className="text-[11px] text-destructive">{errors.signature}</p>}
-      </div>
+      )}
+
+      {!allDocsRead && (
+        <p className="text-[10px] text-amber-600 font-medium text-center">{t("read_all_docs_to_sign")}</p>
+      )}
 
       {/* Agree Terms */}
       <div className="flex items-center gap-2">
@@ -238,6 +291,7 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
           id="declaration-agree"
           checked={data.declarationAgreed}
           onCheckedChange={(checked) => handleUpdate({ declarationAgreed: !!checked })}
+          disabled={!allDocsRead}
         />
         <Label htmlFor="declaration-agree" className="text-xs cursor-pointer">
           {t("agree_terms_conditions")}

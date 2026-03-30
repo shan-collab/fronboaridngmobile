@@ -80,10 +80,13 @@ export interface OnboardingData {
   // Stage 2
   identityDocType: string;
   identityDoc: File[];
+  identityDocFront: File[];
+  identityDocBack: File[];
   identityDocNumber: string;
   identityDocExpiry: Date | undefined;
   identityDocCountry: string;
   identityUploadMethod: "upload" | "manual";
+  isForeignWorker: string;
   workPermit: File[];
   workPermitExpiry: Date | undefined;
   workPermitNumber: string;
@@ -93,6 +96,11 @@ export interface OnboardingData {
   documentsConfirmed: boolean;
   // Stage 3
   iban: string;
+  ibanCountryCode: string;
+  ibanCheckDigits: string;
+  ibanBBAN: string;
+  bic: string;
+  accountHoldingBranch: string;
   ribDocument: File[];
   accountHolderName: string;
   bankCountry: string;
@@ -130,7 +138,7 @@ export interface OnboardingData {
   lunchTicketFormGenerated: boolean;
   // Declaration section
   declarationAgreed: boolean;
-  certificateAccepted: boolean | null; // true=accept, false=refuse, null=not chosen
+  certificateAccepted: boolean | null;
   // New bank details (pending approval)
   newBankDetails?: {
     iban: string;
@@ -146,6 +154,12 @@ export interface OnboardingData {
   acknowledgementConfirmed: boolean;
   // Document rejection tracking
   rejectedDocuments: Record<string, { rejected: boolean; reason: string; fileName: string }>;
+  // Stage 5 - health insurance doc read tracking
+  healthInsuranceDocRead: boolean;
+  // Stage 6 - doc read tracking
+  providentDocsRead: Record<string, boolean>;
+  digiposteDocsRead: Record<string, boolean>;
+  acknowledgementDocRead: boolean;
 }
 
 const defaultData: OnboardingData = {
@@ -165,11 +179,15 @@ const defaultData: OnboardingData = {
   rqthRecognition: "", rqthDocument: [], firstAidTraining: "", firstAidDocument: [],
   electricalSafetyTraining: "", electricalSafetyDocument: [],
   solidarityDayCertificate: "", solidarityDayDocument: [],
-  identityDocType: "", identityDoc: [], identityDocNumber: "",
+  identityDocType: "", identityDoc: [], identityDocFront: [], identityDocBack: [],
+  identityDocNumber: "",
   identityDocExpiry: undefined, identityDocCountry: "", identityUploadMethod: "upload",
+  isForeignWorker: "",
   workPermit: [], workPermitExpiry: undefined, workPermitNumber: "", workPermitIssuedBy: "",
   criminalRecord: [], cpamProof: [], documentsConfirmed: false,
-  iban: "", ribDocument: [], accountHolderName: "", bankCountry: "France", bankEntryMethod: "upload",
+  iban: "", ibanCountryCode: "", ibanCheckDigits: "", ibanBBAN: "",
+  bic: "", accountHoldingBranch: "",
+  ribDocument: [], accountHolderName: "", bankCountry: "France", bankEntryMethod: "upload",
   contractSigned: false, dataProtectionAccepted: false, managerSigned: false,
   contractHistory: [], activeContractId: "",
   internalRulesConfirmed: false, codeOfConductConfirmed: false,
@@ -190,6 +208,10 @@ const defaultData: OnboardingData = {
   newBankDetails: undefined,
   stageApprovalStatus: { 1: "none", 2: "none", 3: "none", 4: "none", 5: "none" },
   contractExtended: false, needsResign: false,
+  healthInsuranceDocRead: false,
+  providentDocsRead: {},
+  digiposteDocsRead: {},
+  acknowledgementDocRead: false,
 };
 
 interface OnboardingContextType {

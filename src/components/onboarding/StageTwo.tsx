@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, FileText, Shield, CreditCard, AlertCircle, Sparkles } from "lucide-react";
@@ -81,25 +82,32 @@ const StageTwo = ({ onNext, onBack }: StageTwoProps) => {
     if (Object.keys(errors).length > 0) setErrors({});
   };
 
+  const isForeignWorker = data.isForeignWorker === "yes";
+
   const isValid = useMemo(() => {
     const hasIdentity = data.identityDocType && (
-      (data.identityUploadMethod === "upload" && data.identityDoc.length > 0) ||
+      (data.identityUploadMethod === "upload" && data.identityDocFront.length > 0 && data.identityDocBack.length > 0) ||
       (data.identityUploadMethod === "manual" && data.identityDocNumber && data.identityDocExpiry && data.identityDocCountry)
     );
+    // Manual entry is always mandatory
+    const hasManualEntry = data.identityDocNumber && data.identityDocExpiry && data.identityDocCountry;
     const hasCriminal = data.criminalRecord.length > 0;
-    return !!(hasIdentity && hasCriminal);
+    const hasForeignWorkerAnswer = !!data.isForeignWorker;
+    return !!(hasIdentity && hasManualEntry && hasCriminal && hasForeignWorkerAnswer);
   }, [data]);
 
   const validate = () => {
     const e: Record<string, string> = {};
     if (!data.identityDocType) e.identityDocType = t("required");
-    if (data.identityUploadMethod === "upload" && data.identityDoc.length === 0) e.identityDoc = t("upload_id");
-    if (data.identityUploadMethod === "manual") {
-      if (!data.identityDocNumber) e.identityDocNumber = t("required");
-      if (!data.identityDocExpiry) e.identityDocExpiry = t("required");
-      if (!data.identityDocCountry) e.identityDocCountry = t("required");
+    if (data.identityUploadMethod === "upload") {
+      if (data.identityDocFront.length === 0) e.identityDocFront = t("required");
+      if (data.identityDocBack.length === 0) e.identityDocBack = t("required");
     }
+    if (!data.identityDocNumber) e.identityDocNumber = t("required");
+    if (!data.identityDocExpiry) e.identityDocExpiry = t("required");
+    if (!data.identityDocCountry) e.identityDocCountry = t("required");
     if (data.criminalRecord.length === 0) e.criminalRecord = t("required");
+    if (!data.isForeignWorker) e.isForeignWorker = t("required");
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -142,68 +150,98 @@ const StageTwo = ({ onNext, onBack }: StageTwoProps) => {
 
         {data.identityDocType && <IDSampleGuide type={data.identityDocType} />}
 
-        <Tabs value={data.identityUploadMethod} onValueChange={v => handleUpdate({ identityUploadMethod: v as "upload" | "manual" })}>
-          <TabsList className="w-full h-8">
-            <TabsTrigger value="upload" className="flex-1 text-xs h-7">{t("upload")}</TabsTrigger>
-            <TabsTrigger value="manual" className="flex-1 text-xs h-7">{t("manual_entry")}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="upload" className="mt-2">
-            <MultiFileUpload label={t("upload_id")} files={data.identityDoc} onFilesChange={f => handleUpdate({ identityDoc: f })} hint={t("clear_photo_hint")} error={errors.identityDoc} />
-          </TabsContent>
-          <TabsContent value="manual" className="mt-2 space-y-2">
-            <Field label={t("doc_number")} required>
-              <Input value={data.identityDocNumber} onChange={e => handleUpdate({ identityDocNumber: e.target.value })} className={cn("h-9", errors.identityDocNumber && !data.identityDocNumber && "border-destructive")} />
-            </Field>
-            <Field label={t("expiry_date")} required>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full justify-start h-9 text-xs", !data.identityDocExpiry && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />{data.identityDocExpiry ? format(data.identityDocExpiry, "PPP") : t("select_date")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={data.identityDocExpiry} onSelect={d => handleUpdate({ identityDocExpiry: d })} className="p-3 pointer-events-auto" /></PopoverContent>
-              </Popover>
-            </Field>
-            <Field label={t("issuing_country")} required>
-              <Select value={data.identityDocCountry} onValueChange={v => handleUpdate({ identityDocCountry: v })}>
-                <SelectTrigger className={cn("h-9 text-xs", errors.identityDocCountry && !data.identityDocCountry && "border-destructive")}><SelectValue placeholder={t("select")} /></SelectTrigger>
-                <SelectContent>{countryOptions.map(c => <SelectItem key={c.value} value={c.value}>{t(c.key)}</SelectItem>)}</SelectContent>
-              </Select>
-            </Field>
-          </TabsContent>
-        </Tabs>
+        {/* Upload section - Front and Back separately */}
+        {data.identityDocType && (
+          <div className="space-y-3">
+            <Tabs value={data.identityUploadMethod} onValueChange={v => handleUpdate({ identityUploadMethod: v as "upload" | "manual" })}>
+              <TabsList className="w-full h-8">
+                <TabsTrigger value="upload" className="flex-1 text-xs h-7">{t("upload")}</TabsTrigger>
+                <TabsTrigger value="manual" className="flex-1 text-xs h-7">{t("manual_entry")}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="mt-2 space-y-3">
+                <MultiFileUpload label={t("front_image")} files={data.identityDocFront} onFilesChange={f => handleUpdate({ identityDocFront: f })} hint={t("upload_front_hint")} error={errors.identityDocFront} />
+                <MultiFileUpload label={t("back_image")} files={data.identityDocBack} onFilesChange={f => handleUpdate({ identityDocBack: f })} hint={t("upload_back_hint")} error={errors.identityDocBack} />
+              </TabsContent>
+              <TabsContent value="manual" className="mt-2">
+                {/* Manual entry fields shown below regardless */}
+              </TabsContent>
+            </Tabs>
+
+            {/* Manual entry fields - always visible and mandatory */}
+            <div className="border border-border rounded-xl bg-card p-3 space-y-2">
+              <p className="text-[10px] font-semibold text-card-foreground">{t("manual_entry_details")} <span className="text-destructive">*</span></p>
+              <Field label={t("doc_number")} required>
+                <Input value={data.identityDocNumber} onChange={e => handleUpdate({ identityDocNumber: e.target.value })} className={cn("h-9", errors.identityDocNumber && !data.identityDocNumber && "border-destructive")} />
+              </Field>
+              <Field label={t("expiry_date")} required>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start h-9 text-xs", !data.identityDocExpiry && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />{data.identityDocExpiry ? format(data.identityDocExpiry, "PPP") : t("select_date")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={data.identityDocExpiry} onSelect={d => handleUpdate({ identityDocExpiry: d })} className="p-3 pointer-events-auto" /></PopoverContent>
+                </Popover>
+              </Field>
+              <Field label={t("issuing_country")} required>
+                <Select value={data.identityDocCountry} onValueChange={v => handleUpdate({ identityDocCountry: v })}>
+                  <SelectTrigger className={cn("h-9 text-xs", errors.identityDocCountry && !data.identityDocCountry && "border-destructive")}><SelectValue placeholder={t("select")} /></SelectTrigger>
+                  <SelectContent>{countryOptions.map(c => <SelectItem key={c.value} value={c.value}>{t(c.key)}</SelectItem>)}</SelectContent>
+                </Select>
+              </Field>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Work Authorization (Foreign Worker Only) */}
+      {/* Work Authorization - Foreign Worker Question */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center"><Shield className="w-3.5 h-3.5 text-primary" /></div>
-          <h3 className="font-semibold text-sm text-card-foreground">{t("work_authorization_foreign")}</h3>
+          <h3 className="font-semibold text-sm text-card-foreground">{t("work_authorization")}</h3>
         </div>
-        <Field label={t("residence_permit_number")}>
-          <Input value={data.workPermitNumber} onChange={e => handleUpdate({ workPermitNumber: e.target.value })} className="h-9" placeholder={t("enter_permit_number")} />
+        <Field label={t("foreign_worker_question")} required>
+          <RadioGroup value={data.isForeignWorker || ""} onValueChange={v => handleUpdate({ isForeignWorker: v })} className="flex gap-4 pt-1">
+            <label className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-all text-xs", data.isForeignWorker === "yes" ? "text-primary font-semibold" : "text-muted-foreground")}>
+              <RadioGroupItem value="yes" id="fw-yes" className="h-3.5 w-3.5" />
+              <span>{t("yes")}</span>
+            </label>
+            <label className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-all text-xs", data.isForeignWorker === "no" ? "text-primary font-semibold" : "text-muted-foreground")}>
+              <RadioGroupItem value="no" id="fw-no" className="h-3.5 w-3.5" />
+              <span>{t("no")}</span>
+            </label>
+          </RadioGroup>
+          {errors.isForeignWorker && <p className="text-[11px] text-destructive">{errors.isForeignWorker}</p>}
         </Field>
-        <Field label={t("expiry_date")}>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("w-full justify-start h-9 text-xs", !data.workPermitExpiry && "text-muted-foreground")}>
-                <CalendarIcon className="mr-2 h-3.5 w-3.5" />{data.workPermitExpiry ? format(data.workPermitExpiry, "PPP") : t("select_date")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={data.workPermitExpiry} onSelect={d => handleUpdate({ workPermitExpiry: d })} className="p-3 pointer-events-auto" /></PopoverContent>
-          </Popover>
-        </Field>
-        <Field label={t("issued_by")}>
-          <Input value={data.workPermitIssuedBy} onChange={e => handleUpdate({ workPermitIssuedBy: e.target.value })} className="h-9" placeholder={t("enter_issued_by")} />
-        </Field>
-        <MultiFileUpload label={t("upload_work_permit")} files={data.workPermit} onFilesChange={f => handleUpdate({ workPermit: f })} hint={t("clear_photo_hint")} />
+
+        {isForeignWorker && (
+          <div className="space-y-2 border border-border rounded-xl bg-card p-3">
+            <Field label={t("residence_permit_number")}>
+              <Input value={data.workPermitNumber} onChange={e => handleUpdate({ workPermitNumber: e.target.value })} className="h-9" placeholder={t("enter_permit_number")} />
+            </Field>
+            <Field label={t("expiry_date")}>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start h-9 text-xs", !data.workPermitExpiry && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />{data.workPermitExpiry ? format(data.workPermitExpiry, "PPP") : t("select_date")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={data.workPermitExpiry} onSelect={d => handleUpdate({ workPermitExpiry: d })} className="p-3 pointer-events-auto" /></PopoverContent>
+              </Popover>
+            </Field>
+            <Field label={t("issued_by")}>
+              <Input value={data.workPermitIssuedBy} onChange={e => handleUpdate({ workPermitIssuedBy: e.target.value })} className="h-9" placeholder={t("enter_issued_by")} />
+            </Field>
+            <MultiFileUpload label={t("upload_work_permit")} files={data.workPermit} onFilesChange={f => handleUpdate({ workPermit: f })} hint={t("clear_photo_hint")} />
+          </div>
+        )}
       </div>
 
       {/* Criminal Record Certificate */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center"><FileText className="w-3.5 h-3.5 text-primary" /></div>
-          <h3 className="font-semibold text-sm text-card-foreground">{t("criminal_record")}</h3>
+          <h3 className="font-semibold text-sm text-card-foreground">{t("criminal_record")} <span className="text-destructive">*</span></h3>
         </div>
         <MultiFileUpload label={t("upload_certificate")} files={data.criminalRecord} onFilesChange={f => handleUpdate({ criminalRecord: f })} hint={t("recent_cert_hint")} error={errors.criminalRecord} />
         <div className="flex items-start gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
