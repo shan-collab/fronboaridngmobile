@@ -1545,7 +1545,7 @@ const OnboardingView = () => {
                   {sStatus === "pending" && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-yellow-400" />}
                   {sStatus === "approved" && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400" />}
                   {i === 3 && data.needsResign && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
-                  {i === 1 && data.rejectedDocuments?.identityDoc?.rejected && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive animate-pulse" />}
+                  {i === 1 && hasRejectedDocs && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive animate-pulse" />}
                 </button>
               );
             })}
