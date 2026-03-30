@@ -607,15 +607,6 @@ const translations: Record<string, Record<Lang, string>> = {
   "onboarding_complete_title": { en: "Onboarding Complete!", fr: "Intégration terminée !" },
   "onboarding_complete_desc": { en: "Your onboarding process has been completed successfully. We look forward to seeing you on your first day in store!", fr: "Votre processus d'intégration est terminé avec succès. Nous avons hâte de vous voir lors de votre premier jour en magasin !" },
   "see_you_first_day": { en: "See you on your first day!", fr: "À bientôt pour votre premier jour !" },
-};
-
-interface LanguageContextType {
-  lang: Lang;
-  setLang: (l: Lang) => void;
-  t: (key: string) => string;
-}
-
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
   // Document rejection
   "rejected_file": { en: "Rejected file", fr: "Fichier rejeté" },
@@ -628,6 +619,14 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
   "profile_rejected_desc": { en: "Your onboarding profile has been rejected by the manager. Please contact your manager for more details.", fr: "Votre profil d'intégration a été rejeté par le manager. Veuillez contacter votre manager pour plus de détails." },
   "profile_rejected_contact": { en: "Contact your manager or HR for further details and next steps.", fr: "Contactez votre manager ou les RH pour plus de détails et les prochaines étapes." },
 };
+
+interface LanguageContextType {
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  t: (key: string) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [lang, setLang] = useState<Lang>("fr");
