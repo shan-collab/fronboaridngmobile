@@ -681,21 +681,58 @@ const OnboardingView = () => {
     </div>
   );
 
+  const RejectionAlert = ({ docKey }: { docKey: string }) => {
+    const rejection = data.rejectedDocuments?.[docKey];
+    if (!rejection?.rejected) return null;
+    return (
+      <div className="flex items-center gap-2 p-1.5 bg-destructive/5 border border-destructive/30 rounded-lg">
+        <AlertTriangle className="w-3 h-3 text-destructive shrink-0" />
+        <span className="text-[10px] text-destructive font-medium flex-1 truncate">
+          {t("rejected")}: {rejection.reason}
+        </span>
+        <Badge className="bg-destructive/15 text-destructive border-destructive/30 text-[8px] h-4 px-1.5">{t("rejected")}</Badge>
+      </div>
+    );
+  };
+
+  const RejectedFileReadOnly = ({ docKey, files }: { docKey: string; files: File[] }) => {
+    const rejection = data.rejectedDocuments?.[docKey];
+    if (!rejection?.rejected || files.length === 0) return null;
+    return (
+      <div className="opacity-60">
+        <p className="text-[10px] text-destructive font-medium mb-1">{t("rejected_file")}:</p>
+        <MultiFileUpload label="" files={files} onFilesChange={() => {}} readOnly />
+      </div>
+    );
+  };
+
   const renderDocumentsEdit = () => {
     const identityRejection = data.rejectedDocuments?.identityDoc;
+    const criminalRejection = data.rejectedDocuments?.criminalRecord;
+    const workPermitRejection = data.rejectedDocuments?.workPermit;
+
+    // If work auth is blocked, show block screen
+    if (data.workAuthBlocked && workPermitRejection?.rejected) {
+      return (
+        <div className="space-y-4">
+          <div className="flex flex-col items-center gap-4 text-center py-6">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-destructive" />
+            </div>
+            <h2 className="text-lg font-bold text-card-foreground">{t("work_auth_blocked_title")}</h2>
+            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">{t("work_auth_blocked_desc")}</p>
+            <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 max-w-xs">
+              <p className="text-xs text-destructive font-medium">{t("work_auth_blocked_contact")}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
     <div className="space-y-4">
       <SectionBlock icon={CreditCard} title={t("identity_proof")}>
-        {/* Inline rejection alert next to identity proof */}
-        {identityRejection?.rejected && (
-          <div className="flex items-center gap-2 p-1.5 bg-destructive/5 border border-destructive/30 rounded-lg">
-            <AlertTriangle className="w-3 h-3 text-destructive shrink-0" />
-            <span className="text-[10px] text-destructive font-medium flex-1 truncate">
-              {t("rejected")}: {identityRejection.fileName}
-            </span>
-            <Badge className="bg-destructive/15 text-destructive border-destructive/30 text-[8px] h-4 px-1.5">{t("rejected")}</Badge>
-          </div>
-        )}
+        <RejectionAlert docKey="identityDoc" />
         <Field label={t("doc_type")}>
           <Select value={data.identityDocType} onValueChange={v => handleDataUpdate({ identityDocType: v })}>
             <SelectTrigger className="h-9 text-xs"><SelectValue placeholder={t("select")} /></SelectTrigger>
@@ -705,27 +742,29 @@ const OnboardingView = () => {
             </SelectContent>
           </Select>
         </Field>
+        {identityRejection?.rejected && (
+          <RejectedFileReadOnly docKey="identityDoc" files={data.identityDocFront.length > 0 ? data.identityDocFront : data.identityDoc} />
+        )}
         <MultiFileUpload 
           label={identityRejection?.rejected ? t("upload_new_identity_doc") : t("upload_id")} 
-          files={data.identityDoc} 
+          files={identityRejection?.rejected ? [] : data.identityDoc}
           onFilesChange={f => {
-            const nextRejectedDocs =
-              f.length > 0 && identityRejection?.rejected
-                ? { ...data.rejectedDocuments, identityDoc: { ...identityRejection, rejected: false } }
-                : data.rejectedDocuments;
-
-            handleDataUpdate({
-              identityDoc: f,
-              rejectedDocuments: nextRejectedDocs,
-            });
+            handleDataUpdate({ identityDoc: f });
           }} 
           hint={identityRejection?.rejected ? t("clear_unblurred_photo_hint") : t("reupload_hint")} 
-          error={identityRejection?.rejected ? t("new_document_required") : undefined}
         />
       </SectionBlock>
       <div className="border-t border-border" />
       <SectionBlock icon={FileText} title={t("criminal_record")}>
-        <MultiFileUpload label={t("upload_certificate")} files={data.criminalRecord} onFilesChange={f => handleDataUpdate({ criminalRecord: f })} />
+        <RejectionAlert docKey="criminalRecord" />
+        {criminalRejection?.rejected && (
+          <RejectedFileReadOnly docKey="criminalRecord" files={data.criminalRecord} />
+        )}
+        <MultiFileUpload 
+          label={criminalRejection?.rejected ? t("upload_new_certificate") : t("upload_certificate")} 
+          files={criminalRejection?.rejected ? [] : data.criminalRecord} 
+          onFilesChange={f => handleDataUpdate({ criminalRecord: f })} 
+        />
         <div className="flex items-start gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
           <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-[10px] text-amber-700 leading-relaxed">{t("criminal_record_alert")}</p>
@@ -733,6 +772,7 @@ const OnboardingView = () => {
       </SectionBlock>
       <div className="border-t border-border" />
       <SectionBlock icon={Shield} title={t("work_authorization_foreign")}>
+        <RejectionAlert docKey="workPermit" />
         <Field label={t("residence_permit_number")}>
           <Input value={data.workPermitNumber} onChange={e => handleDataUpdate({ workPermitNumber: e.target.value })} className="h-9" placeholder={t("enter_permit_number")} />
         </Field>
@@ -749,7 +789,14 @@ const OnboardingView = () => {
         <Field label={t("issued_by")}>
           <Input value={data.workPermitIssuedBy} onChange={e => handleDataUpdate({ workPermitIssuedBy: e.target.value })} className="h-9" placeholder={t("enter_issued_by")} />
         </Field>
-        <MultiFileUpload label={t("upload_work_permit")} files={data.workPermit} onFilesChange={f => handleDataUpdate({ workPermit: f })} />
+        {workPermitRejection?.rejected && (
+          <RejectedFileReadOnly docKey="workPermit" files={data.workPermit} />
+        )}
+        <MultiFileUpload 
+          label={workPermitRejection?.rejected ? t("upload_new_work_permit") : t("upload_work_permit")} 
+          files={workPermitRejection?.rejected ? [] : data.workPermit} 
+          onFilesChange={f => handleDataUpdate({ workPermit: f })} 
+        />
       </SectionBlock>
     </div>
     );
