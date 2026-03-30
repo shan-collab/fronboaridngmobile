@@ -104,12 +104,14 @@ const StageFive = ({ onComplete, onBack }: StageFiveProps) => {
           <HelpIcon content={t("help_health_insurance")} />
         </div>
 
-        {/* Reference documents with auto-tick */}
+        {/* Reference documents */}
         <div className="border border-border rounded-lg bg-muted/20 p-2.5 space-y-0.5">
           <p className="text-[10px] font-medium text-muted-foreground mb-1">{t("reference_documents")}</p>
-          <p className="text-[10px] text-muted-foreground">{t("read_all_pages_to_tick")}</p>
           <div className="flex items-center gap-2.5 py-1.5">
-            <Checkbox checked={data.healthInsuranceDocRead} disabled />
+            <Checkbox
+              checked={data.healthInsuranceDocRead}
+              onCheckedChange={() => handleUpdate({ healthInsuranceDocRead: !data.healthInsuranceDocRead })}
+            />
             <PDFViewerDialog
               title={t("practical_guide")}
               trigger={
@@ -119,7 +121,6 @@ const StageFive = ({ onComplete, onBack }: StageFiveProps) => {
                 </button>
               }
               showDownload
-              onAllPagesRead={handleHealthDocRead}
             />
           </div>
           <div className="py-1.5">

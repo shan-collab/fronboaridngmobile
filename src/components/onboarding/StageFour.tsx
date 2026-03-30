@@ -105,7 +105,7 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
   // Auto-tick handler for documents
   const handleDocRead = (field: "internalRulesConfirmed" | "codeOfConductConfirmed" | "contractDocConfirmed" | "dataProtectionCharterConfirmed") => {
     if (!data.policyAgreed) {
-      updateData({ [field]: true });
+      updateData({ [field]: !data[field] });
     }
   };
 
@@ -147,7 +147,6 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
           </button>
         }
         showDownload
-        onAllPagesRead={() => handleDocRead(field)}
       />
     </div>
   );
@@ -183,7 +182,6 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
           <BookOpen className="w-3.5 h-3.5 text-primary" />
           <span className="text-xs font-semibold text-card-foreground">{t("regulations_and_contracts")}</span>
         </div>
-        <p className="text-[10px] text-muted-foreground">{t("read_all_pages_to_tick")}</p>
 
         <div className="space-y-2.5">
           {/* Internal Rules */}
@@ -191,7 +189,8 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
             <Checkbox
               id="internal-rules"
               checked={data.internalRulesConfirmed}
-              disabled
+              onCheckedChange={(v) => handleDocRead("internalRulesConfirmed")}
+              disabled={data.policyAgreed}
             />
             <DocLink title={t("internal_rules")} field="internalRulesConfirmed" />
           </div>
@@ -201,7 +200,8 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
             <Checkbox
               id="code-conduct"
               checked={data.codeOfConductConfirmed}
-              disabled
+              onCheckedChange={(v) => handleDocRead("codeOfConductConfirmed")}
+              disabled={data.policyAgreed}
             />
             <DocLink title={t("code_of_conduct")} field="codeOfConductConfirmed" />
           </div>
@@ -211,7 +211,8 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
             <Checkbox
               id="contract-doc"
               checked={data.contractDocConfirmed}
-              disabled
+              onCheckedChange={(v) => handleDocRead("contractDocConfirmed")}
+              disabled={data.policyAgreed}
             />
             <PDFViewerDialog
               title={t("contract_document")}
@@ -223,7 +224,6 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
               }
               showDownload
               contractContent={contractTemplate(data.contractSigned)}
-              onAllPagesRead={() => handleDocRead("contractDocConfirmed")}
             />
           </div>
         </div>
@@ -240,7 +240,8 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
           <Checkbox
             id="data-protection-charter"
             checked={data.dataProtectionCharterConfirmed}
-            disabled
+            onCheckedChange={(v) => handleDocRead("dataProtectionCharterConfirmed")}
+            disabled={data.policyAgreed}
           />
           <DocLink title={t("data_protection_charter")} field="dataProtectionCharterConfirmed" />
         </div>
