@@ -13,7 +13,6 @@ import { CalendarIcon, FileText, Shield, CreditCard, AlertCircle, Sparkles } fro
 import MultiFileUpload from "./MultiFileUpload";
 import { useState, useMemo, useEffect } from "react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import idFrontSample from "@/assets/id-front-sample.png";
 import idBackSample from "@/assets/id-back-sample.png";
 import passportFrontSample from "@/assets/passport-front-sample.png";
