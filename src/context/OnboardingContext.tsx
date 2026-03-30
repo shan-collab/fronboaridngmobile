@@ -152,8 +152,13 @@ export interface OnboardingData {
   needsResign: boolean;
   // Removed fields
   acknowledgementConfirmed: boolean;
-  // Document rejection tracking
+  // Document rejection tracking - per document field
   rejectedDocuments: Record<string, { rejected: boolean; reason: string; fileName: string }>;
+  // Profile-level rejection
+  profileRejected: boolean;
+  profileRejectionReason: string;
+  // Work authorization blocked (invalid & cannot proceed)
+  workAuthBlocked: boolean;
   // Stage 5 - health insurance doc read tracking
   healthInsuranceDocRead: boolean;
   // Stage 6 - doc read tracking
