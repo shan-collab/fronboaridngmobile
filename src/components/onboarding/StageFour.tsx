@@ -147,7 +147,6 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
           </button>
         }
         showDownload
-        onAllPagesRead={() => handleDocRead(field)}
       />
     </div>
   );
