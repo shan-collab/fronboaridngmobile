@@ -6,31 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, PenTool, CheckCircle2, Download, Clock, Building2, Upload, Eye, BookOpen, Shield, ExternalLink, Info } from "lucide-react";
 import { useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
-import smythsLogo from "@/assets/smyths-logo.png";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import FileUpload from "./FileUpload";
 import PDFViewerDialog from "./PDFViewerDialog";
 import { Label } from "@/components/ui/label";
 
 interface StageFourProps { onNext: () => void; onBack: () => void; }
-
-const DocLink = ({ title, onView }: { title: string; onView?: () => void }) => {
-  const { t } = useLanguage();
-  return (
-    <div className="flex items-center gap-2 group">
-      <PDFViewerDialog
-        title={title}
-        trigger={
-          <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1">
-            <ExternalLink className="w-3 h-3" />
-            {title}
-          </button>
-        }
-        showDownload
-      />
-    </div>
-  );
-};
 
 const StageFour = ({ onNext, onBack }: StageFourProps) => {
   const { data, updateData, completedStages } = useOnboarding();
@@ -121,10 +102,16 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
     }
   };
 
+  // Auto-tick handler for documents
+  const handleDocRead = (field: "internalRulesConfirmed" | "codeOfConductConfirmed" | "contractDocConfirmed" | "dataProtectionCharterConfirmed") => {
+    if (!data.policyAgreed) {
+      updateData({ [field]: true });
+    }
+  };
+
   const contractTemplate = (showSignature = false) => (
     <div className="bg-background text-foreground p-5 space-y-4 text-xs">
       <div className="text-center border-b border-border pb-4">
-        <img src={smythsLogo} alt="Smyths" className="w-16 h-16 mx-auto mb-2 object-contain" />
         <h4 className="font-bold text-base tracking-wide">{t("employment_contract_title")}</h4>
       </div>
       <p className="text-[11px] leading-relaxed">{t("contract_intro")}</p>
@@ -146,6 +133,22 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
           </div>
         )}
       </div>
+    </div>
+  );
+
+  const DocLink = ({ title, field }: { title: string; field: "internalRulesConfirmed" | "codeOfConductConfirmed" | "contractDocConfirmed" | "dataProtectionCharterConfirmed" }) => (
+    <div className="flex items-center gap-2 group">
+      <PDFViewerDialog
+        title={title}
+        trigger={
+          <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1">
+            <ExternalLink className="w-3 h-3" />
+            {title}
+          </button>
+        }
+        showDownload
+        onAllPagesRead={() => handleDocRead(field)}
+      />
     </div>
   );
 
@@ -180,6 +183,7 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
           <BookOpen className="w-3.5 h-3.5 text-primary" />
           <span className="text-xs font-semibold text-card-foreground">{t("regulations_and_contracts")}</span>
         </div>
+        <p className="text-[10px] text-muted-foreground">{t("read_all_pages_to_tick")}</p>
 
         <div className="space-y-2.5">
           {/* Internal Rules */}
@@ -187,10 +191,9 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
             <Checkbox
               id="internal-rules"
               checked={data.internalRulesConfirmed}
-              onCheckedChange={(checked) => updateData({ internalRulesConfirmed: !!checked })}
-              disabled={data.policyAgreed}
+              disabled
             />
-            <DocLink title={t("internal_rules")} />
+            <DocLink title={t("internal_rules")} field="internalRulesConfirmed" />
           </div>
 
           {/* Code of Conduct */}
@@ -198,10 +201,9 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
             <Checkbox
               id="code-conduct"
               checked={data.codeOfConductConfirmed}
-              onCheckedChange={(checked) => updateData({ codeOfConductConfirmed: !!checked })}
-              disabled={data.policyAgreed}
+              disabled
             />
-            <DocLink title={t("code_of_conduct")} />
+            <DocLink title={t("code_of_conduct")} field="codeOfConductConfirmed" />
           </div>
 
           {/* Contract */}
@@ -209,8 +211,7 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
             <Checkbox
               id="contract-doc"
               checked={data.contractDocConfirmed}
-              onCheckedChange={(checked) => updateData({ contractDocConfirmed: !!checked })}
-              disabled={data.policyAgreed}
+              disabled
             />
             <PDFViewerDialog
               title={t("contract_document")}
@@ -222,6 +223,7 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
               }
               showDownload
               contractContent={contractTemplate(data.contractSigned)}
+              onAllPagesRead={() => handleDocRead("contractDocConfirmed")}
             />
           </div>
         </div>
@@ -238,10 +240,9 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
           <Checkbox
             id="data-protection-charter"
             checked={data.dataProtectionCharterConfirmed}
-            onCheckedChange={(checked) => updateData({ dataProtectionCharterConfirmed: !!checked })}
-            disabled={data.policyAgreed}
+            disabled
           />
-          <DocLink title={t("data_protection_charter")} />
+          <DocLink title={t("data_protection_charter")} field="dataProtectionCharterConfirmed" />
         </div>
       </div>
 
@@ -249,7 +250,7 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
       {!data.policyAgreed ? (
         <div className="space-y-2">
           {!allDocsChecked && (
-            <p className="text-[10px] text-muted-foreground text-center">{t("agree_policy_to_continue")}</p>
+            <p className="text-[10px] text-muted-foreground text-center">{t("read_docs_to_agree")}</p>
           )}
           <Button
             onClick={() => updateData({ policyAgreed: true })}

@@ -9,31 +9,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Heart, UtensilsCrossed, Plus, Trash2, Download, ExternalLink, FileText, CheckCircle2, Shield } from "lucide-react";
+import { CalendarIcon, Heart, UtensilsCrossed, Plus, Trash2, Download, ExternalLink, FileText, CheckCircle2, Shield, Info } from "lucide-react";
 import MultiFileUpload from "./MultiFileUpload";
 import PDFViewerDialog from "./PDFViewerDialog";
 import HelpIcon from "./HelpIcon";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useMemo, useEffect } from "react";
 
 interface StageFiveProps { onComplete: () => void; onBack: () => void; }
-
-const DocFileLink = ({ title }: { title: string }) => {
-  const { t } = useLanguage();
-  return (
-    <div className="flex items-center justify-between py-1.5">
-      <PDFViewerDialog
-        title={title}
-        trigger={
-          <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1.5">
-            <ExternalLink className="w-3 h-3 shrink-0" />
-            {title}
-          </button>
-        }
-        showDownload
-      />
-    </div>
-  );
-};
 
 const StageFive = ({ onComplete, onBack }: StageFiveProps) => {
   const { data, updateData } = useOnboarding();
@@ -60,6 +43,7 @@ const StageFive = ({ onComplete, onBack }: StageFiveProps) => {
   const needsIndividualDate = data.insuranceExemptionReason === "exemption_new_hire";
 
   const isValid = useMemo(() => {
+    if (!data.healthInsuranceDocRead) return false;
     if (!data.enrollHealthInsurance || !data.enrollRestaurantTicket) return false;
     if (data.enrollHealthInsurance === "yes") {
       if (!data.coverageType) return false;
@@ -103,6 +87,13 @@ const StageFive = ({ onComplete, onBack }: StageFiveProps) => {
     { value: "exemption_couple_same_company", key: "exemption_couple_same_company" },
   ];
 
+  // Auto-tick handler for health insurance doc
+  const handleHealthDocRead = () => {
+    if (!data.healthInsuranceDocRead) {
+      handleUpdate({ healthInsuranceDocRead: true });
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* ============ HEALTH INSURANCE ============ */}
@@ -113,16 +104,62 @@ const StageFive = ({ onComplete, onBack }: StageFiveProps) => {
           <HelpIcon content={t("help_health_insurance")} />
         </div>
 
-        {/* Reference documents - compact */}
+        {/* Reference documents with auto-tick */}
         <div className="border border-border rounded-lg bg-muted/20 p-2.5 space-y-0.5">
           <p className="text-[10px] font-medium text-muted-foreground mb-1">{t("reference_documents")}</p>
-          <DocFileLink title={t("practical_guide")} />
-          <DocFileLink title={t("membership_terms")} />
-          <DocFileLink title={t("employee_contact_verspieren")} />
+          <p className="text-[10px] text-muted-foreground">{t("read_all_pages_to_tick")}</p>
+          <div className="flex items-center gap-2.5 py-1.5">
+            <Checkbox checked={data.healthInsuranceDocRead} disabled />
+            <PDFViewerDialog
+              title={t("practical_guide")}
+              trigger={
+                <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1.5">
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  {t("practical_guide")}
+                </button>
+              }
+              showDownload
+              onAllPagesRead={handleHealthDocRead}
+            />
+          </div>
+          <div className="py-1.5">
+            <PDFViewerDialog
+              title={t("membership_terms")}
+              trigger={
+                <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1.5">
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  {t("membership_terms")}
+                </button>
+              }
+              showDownload
+            />
+          </div>
+          <div className="py-1.5">
+            <PDFViewerDialog
+              title={t("employee_contact_verspieren")}
+              trigger={
+                <button className="text-xs text-primary underline hover:text-primary/80 text-left font-medium flex items-center gap-1.5">
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  {t("employee_contact_verspieren")}
+                </button>
+              }
+              showDownload
+            />
+          </div>
         </div>
 
+        {/* Insurance download note */}
+        <div className="flex items-start gap-2 p-2.5 bg-blue-50 rounded-lg border border-blue-200">
+          <Info className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
+          <p className="text-[10px] text-blue-700 leading-relaxed font-medium">{t("insurance_download_note")}</p>
+        </div>
+
+        {!data.healthInsuranceDocRead && (
+          <p className="text-[10px] text-amber-600 font-medium">{t("read_health_doc_first")}</p>
+        )}
+
         {/* Enrollment question - card style */}
-        <div className="bg-card border border-border rounded-xl p-3 space-y-3">
+        <div className={cn("bg-card border border-border rounded-xl p-3 space-y-3", !data.healthInsuranceDocRead && "opacity-50 pointer-events-none")}>
           <div className="space-y-1">
             <Label className="text-xs font-medium">{t("enroll_health")} <span className="text-destructive">*</span></Label>
             <RadioGroup value={data.enrollHealthInsurance} onValueChange={v => handleUpdate({ enrollHealthInsurance: v })} className="flex gap-4 pt-1">

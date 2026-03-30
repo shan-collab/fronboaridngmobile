@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { ChevronLeft, ChevronRight, FileText, Download } from "lucide-react";
-import smythsLogo from "@/assets/smyths-logo.png";
 
 interface PDFViewerDialogProps {
   title: string;
@@ -12,18 +11,37 @@ interface PDFViewerDialogProps {
   trigger: React.ReactNode;
   showDownload?: boolean;
   contractContent?: React.ReactNode;
+  onAllPagesRead?: () => void;
 }
 
-const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, contractContent }: PDFViewerDialogProps) => {
+const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, contractContent, onAllPagesRead }: PDFViewerDialogProps) => {
   const { t } = useLanguage();
   const [currentPage, setCurrentPage] = useState(1);
   const [open, setOpen] = useState(false);
+  const [maxPageReached, setMaxPageReached] = useState(1);
   const totalPages = 3;
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    if (newPage > maxPageReached) {
+      setMaxPageReached(newPage);
+    }
+    if (newPage === totalPages && onAllPagesRead) {
+      onAllPagesRead();
+    }
+  };
+
+  const handleOpen = (v: boolean) => {
+    setOpen(v);
+    if (v) {
+      setCurrentPage(1);
+      setMaxPageReached(1);
+    }
+  };
 
   const pages = [
     <div key={1} className="space-y-3">
       <div className="text-center border-b border-border pb-3">
-        <img src={smythsLogo} alt="" className="w-12 h-12 mx-auto mb-2 object-contain" />
         <h3 className="font-bold text-sm text-foreground">{title}</h3>
         <p className="text-[10px] text-muted-foreground">{t("page")} 1/3</p>
       </div>
@@ -88,7 +106,7 @@ const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, c
   ];
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setCurrentPage(1); }}>
+    <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto p-0">
         <div className="bg-card p-4">
@@ -98,7 +116,7 @@ const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, c
               <Button
                 variant="outline" size="sm" className="h-7 text-[10px] gap-1"
                 disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => p - 1)}
+                onClick={() => handlePageChange(currentPage - 1)}
               >
                 <ChevronLeft className="w-3 h-3" /> {t("previous")}
               </Button>
@@ -106,7 +124,7 @@ const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, c
               <Button
                 variant="outline" size="sm" className="h-7 text-[10px] gap-1"
                 disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => p + 1)}
+                onClick={() => handlePageChange(currentPage + 1)}
               >
                 {t("next_page")} <ChevronRight className="w-3 h-3" />
               </Button>
