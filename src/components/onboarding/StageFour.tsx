@@ -105,7 +105,7 @@ const StageFour = ({ onNext, onBack }: StageFourProps) => {
   // Auto-tick handler for documents
   const handleDocRead = (field: "internalRulesConfirmed" | "codeOfConductConfirmed" | "contractDocConfirmed" | "dataProtectionCharterConfirmed") => {
     if (!data.policyAgreed) {
-      updateData({ [field]: true });
+      updateData({ [field]: !data[field] });
     }
   };
 
