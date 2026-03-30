@@ -152,8 +152,13 @@ export interface OnboardingData {
   needsResign: boolean;
   // Removed fields
   acknowledgementConfirmed: boolean;
-  // Document rejection tracking
+  // Document rejection tracking - per document field
   rejectedDocuments: Record<string, { rejected: boolean; reason: string; fileName: string }>;
+  // Profile-level rejection
+  profileRejected: boolean;
+  profileRejectionReason: string;
+  // Work authorization blocked (invalid & cannot proceed)
+  workAuthBlocked: boolean;
   // Stage 5 - health insurance doc read tracking
   healthInsuranceDocRead: boolean;
   // Stage 6 - doc read tracking
@@ -204,7 +209,12 @@ const defaultData: OnboardingData = {
   acknowledgementConfirmed: false,
   rejectedDocuments: {
     identityDoc: { rejected: true, reason: "Document is blurry / unreadable", fileName: "id-card-front.jpg" },
+    criminalRecord: { rejected: true, reason: "Certificate is expired", fileName: "criminal-record.pdf" },
+    workPermit: { rejected: true, reason: "Work authorization is invalid", fileName: "work-permit.pdf" },
   },
+  profileRejected: false,
+  profileRejectionReason: "",
+  workAuthBlocked: true,
   newBankDetails: undefined,
   stageApprovalStatus: { 1: "none", 2: "none", 3: "none", 4: "none", 5: "none" },
   contractExtended: false, needsResign: false,

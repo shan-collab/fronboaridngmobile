@@ -12,9 +12,11 @@ interface MultiFileUploadProps {
   hint?: string;
   error?: string;
   sampleImage?: React.ReactNode;
+  compact?: boolean;
+  readOnly?: boolean;
 }
 
-const MultiFileUpload = ({ label, files, onFilesChange, accept = "image/*,.pdf", hint, error, sampleImage }: MultiFileUploadProps) => {
+const MultiFileUpload = ({ label, files, onFilesChange, accept = "image/*,.pdf", hint, error, sampleImage, compact, readOnly }: MultiFileUploadProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<Record<number, string>>({});
   const { t } = useLanguage();
@@ -44,7 +46,7 @@ const MultiFileUpload = ({ label, files, onFilesChange, accept = "image/*,.pdf",
   };
 
   return (
-    <div className="space-y-2">
+    <div className={compact ? "space-y-1" : "space-y-2"}>
       <label className="text-xs font-medium text-card-foreground">{label}</label>
       {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
       <input ref={inputRef} type="file" accept={accept} onChange={handleAdd} className="hidden" multiple capture="environment" />
@@ -54,45 +56,47 @@ const MultiFileUpload = ({ label, files, onFilesChange, accept = "image/*,.pdf",
       {files.length > 0 && (
         <div className="space-y-1.5">
           {files.map((file, i) => (
-            <div key={i} className="flex items-center gap-2 bg-muted/30 rounded-xl p-2.5">
+            <div key={i} className={`flex items-center gap-2 bg-muted/30 rounded-xl ${compact ? "p-1.5" : "p-2.5"}`}>
               {previews[i] ? (
                 <Dialog>
                   <DialogTrigger asChild>
-                    <button className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-border">
+                    <button className={`${compact ? "w-7 h-7" : "w-10 h-10"} rounded-lg overflow-hidden shrink-0 border border-border`}>
                       <img src={previews[i]} alt="" className="w-full h-full object-cover" />
                     </button>
                   </DialogTrigger>
                   <DialogContent className="max-w-sm"><img src={previews[i]} alt="Preview" className="w-full rounded-lg" /></DialogContent>
                 </Dialog>
               ) : (
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5 text-primary" />
+                <div className={`${compact ? "w-7 h-7" : "w-10 h-10"} rounded-lg bg-primary/10 flex items-center justify-center shrink-0`}>
+                  <FileText className={`${compact ? "w-3.5 h-3.5" : "w-5 h-5"} text-primary`} />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate text-card-foreground">{file.name}</p>
+                <p className={`${compact ? "text-[10px]" : "text-xs"} font-medium truncate text-card-foreground`}>{file.name}</p>
                 <p className="text-[10px] text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
               </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleView(file, i)}><Eye className="w-3.5 h-3.5" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemove(i)}><X className="w-3.5 h-3.5" /></Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleView(file, i)}><Eye className="w-3 h-3" /></Button>
+              {!readOnly && <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemove(i)}><X className="w-3 h-3" /></Button>}
             </div>
           ))}
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        className="w-full border-2 border-dashed border-border rounded-xl p-4 flex flex-col items-center gap-1.5 hover:border-primary/50 transition-colors bg-muted/20"
-      >
-        <div className="flex gap-3">
-          <Upload className="w-5 h-5 text-muted-foreground" />
-          <Camera className="w-5 h-5 text-muted-foreground" />
-        </div>
-        <span className="text-xs text-muted-foreground">
-          {files.length > 0 ? t("add_more_files") : t("upload_or_photo")}
-        </span>
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className={`w-full border-2 border-dashed border-border rounded-xl ${compact ? "p-2" : "p-4"} flex flex-col items-center gap-1 hover:border-primary/50 transition-colors bg-muted/20`}
+        >
+          <div className="flex gap-2">
+            <Upload className={`${compact ? "w-3.5 h-3.5" : "w-5 h-5"} text-muted-foreground`} />
+            <Camera className={`${compact ? "w-3.5 h-3.5" : "w-5 h-5"} text-muted-foreground`} />
+          </div>
+          <span className={`${compact ? "text-[10px]" : "text-xs"} text-muted-foreground`}>
+            {files.length > 0 ? t("add_more_files") : t("upload_or_photo")}
+          </span>
+        </button>
+      )}
       {error && <p className="text-[11px] text-destructive">{error}</p>}
     </div>
   );

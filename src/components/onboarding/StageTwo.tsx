@@ -12,7 +12,6 @@ import { format } from "date-fns";
 import { CalendarIcon, FileText, Shield, CreditCard, AlertCircle, Sparkles } from "lucide-react";
 import MultiFileUpload from "./MultiFileUpload";
 import { useState, useMemo, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import idFrontSample from "@/assets/id-front-sample.png";
 import idBackSample from "@/assets/id-back-sample.png";
@@ -150,22 +149,14 @@ const StageTwo = ({ onNext, onBack }: StageTwoProps) => {
 
         {data.identityDocType && <IDSampleGuide type={data.identityDocType} />}
 
-        {/* Upload section - Front and Back separately */}
+        {/* Upload and Manual Entry - both shown by default */}
         {data.identityDocType && (
           <div className="space-y-3">
-            <Tabs value={data.identityUploadMethod} onValueChange={v => handleUpdate({ identityUploadMethod: v as "upload" | "manual" })}>
-              <TabsList className="w-full h-8">
-                <TabsTrigger value="upload" className="flex-1 text-xs h-7">{t("upload")}</TabsTrigger>
-                <TabsTrigger value="manual" className="flex-1 text-xs h-7">{t("manual_entry")}</TabsTrigger>
-              </TabsList>
-              <TabsContent value="upload" className="mt-2 space-y-3">
-                <MultiFileUpload label={t("front_image")} files={data.identityDocFront} onFilesChange={f => handleUpdate({ identityDocFront: f })} hint={t("upload_front_hint")} error={errors.identityDocFront} />
-                <MultiFileUpload label={t("back_image")} files={data.identityDocBack} onFilesChange={f => handleUpdate({ identityDocBack: f })} hint={t("upload_back_hint")} error={errors.identityDocBack} />
-              </TabsContent>
-              <TabsContent value="manual" className="mt-2">
-                {/* Manual entry fields shown below regardless */}
-              </TabsContent>
-            </Tabs>
+            {/* Front and Back uploads - compact inline */}
+            <div className="grid grid-cols-2 gap-2">
+              <MultiFileUpload label={t("front_image")} files={data.identityDocFront} onFilesChange={f => handleUpdate({ identityDocFront: f })} hint={t("upload_front_hint")} error={errors.identityDocFront} compact />
+              <MultiFileUpload label={t("back_image")} files={data.identityDocBack} onFilesChange={f => handleUpdate({ identityDocBack: f })} hint={t("upload_back_hint")} error={errors.identityDocBack} compact />
+            </div>
 
             {/* Manual entry fields - always visible and mandatory */}
             <div className="border border-border rounded-xl bg-card p-3 space-y-2">

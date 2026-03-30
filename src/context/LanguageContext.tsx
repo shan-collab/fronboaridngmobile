@@ -607,6 +607,17 @@ const translations: Record<string, Record<Lang, string>> = {
   "onboarding_complete_title": { en: "Onboarding Complete!", fr: "Intégration terminée !" },
   "onboarding_complete_desc": { en: "Your onboarding process has been completed successfully. We look forward to seeing you on your first day in store!", fr: "Votre processus d'intégration est terminé avec succès. Nous avons hâte de vous voir lors de votre premier jour en magasin !" },
   "see_you_first_day": { en: "See you on your first day!", fr: "À bientôt pour votre premier jour !" },
+
+  // Document rejection
+  "rejected_file": { en: "Rejected file", fr: "Fichier rejeté" },
+  "upload_new_certificate": { en: "Upload new certificate", fr: "Télécharger un nouveau certificat" },
+  "upload_new_work_permit": { en: "Upload new work permit", fr: "Télécharger un nouveau permis de travail" },
+  "work_auth_blocked_title": { en: "Work Authorization Invalid", fr: "Autorisation de travail invalide" },
+  "work_auth_blocked_desc": { en: "Your work authorization has been rejected and is invalid. The onboarding process cannot proceed further.", fr: "Votre autorisation de travail a été rejetée et est invalide. Le processus d'intégration ne peut pas continuer." },
+  "work_auth_blocked_contact": { en: "Please contact your manager or HR department for further assistance.", fr: "Veuillez contacter votre manager ou le service RH pour plus d'assistance." },
+  "profile_rejected_title": { en: "Profile Rejected", fr: "Profil rejeté" },
+  "profile_rejected_desc": { en: "Your onboarding profile has been rejected by the manager. Please contact your manager for more details.", fr: "Votre profil d'intégration a été rejeté par le manager. Veuillez contacter votre manager pour plus de détails." },
+  "profile_rejected_contact": { en: "Contact your manager or HR for further details and next steps.", fr: "Contactez votre manager ou les RH pour plus de détails et les prochaines étapes." },
 };
 
 interface LanguageContextType {

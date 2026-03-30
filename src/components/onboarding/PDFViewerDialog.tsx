@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
@@ -19,15 +19,30 @@ const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, c
   const [currentPage, setCurrentPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [maxPageReached, setMaxPageReached] = useState(1);
-  const totalPages = 3;
+  const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const totalPages = contractContent ? 1 : 3;
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     if (newPage > maxPageReached) {
       setMaxPageReached(newPage);
     }
-    if (newPage === totalPages && onAllPagesRead) {
+    if (newPage === totalPages && onAllPagesRead && !contractContent) {
       onAllPagesRead();
+    }
+  };
+
+  // For single-page content (like contract), require scroll to bottom
+  const handleScroll = () => {
+    if (contractContent && contentRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      if (scrollTop + clientHeight >= scrollHeight - 10) {
+        if (!hasScrolledToEnd && onAllPagesRead) {
+          setHasScrolledToEnd(true);
+          onAllPagesRead();
+        }
+      }
     }
   };
 
@@ -36,6 +51,7 @@ const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, c
     if (v) {
       setCurrentPage(1);
       setMaxPageReached(1);
+      setHasScrolledToEnd(false);
     }
   };
 
@@ -108,8 +124,8 @@ const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, c
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto p-0">
-        <div className="bg-card p-4">
+      <DialogContent className="max-w-sm max-h-[80vh] overflow-hidden p-0">
+        <div className="bg-card p-4 overflow-y-auto max-h-[75vh]" ref={contentRef} onScroll={handleScroll}>
           {contractContent || pages[currentPage - 1]}
           {!contractContent && (
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
