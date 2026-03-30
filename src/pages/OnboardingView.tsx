@@ -1508,7 +1508,7 @@ const OnboardingView = () => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-sm text-card-foreground">{t(sectionConfig[activeSection].labelKey)} {t("details")}</h2>
               <div className="flex items-center gap-1.5">
-                {activeSection === 1 && hasRejectedIdentity && (
+                {activeSection === 1 && hasRejectedDocs && (
                   <Badge className="bg-destructive/10 text-destructive border-destructive/40 text-[9px] h-5 gap-1">
                     <AlertTriangle className="w-3 h-3" /> {t("rejected")}
                   </Badge>
