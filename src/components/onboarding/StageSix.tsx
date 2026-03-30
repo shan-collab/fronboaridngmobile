@@ -187,7 +187,10 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
         </div>
         <div className="border border-border rounded-xl bg-card p-3 space-y-1">
           <div className="flex items-center gap-2.5 py-1.5">
-            <Checkbox checked={ackRead} disabled />
+            <Checkbox
+              checked={ackRead}
+              onCheckedChange={() => handleUpdate({ acknowledgementDocRead: !data.acknowledgementDocRead })}
+            />
             <PDFViewerDialog
               title={t("certificate_delivery")}
               trigger={
@@ -197,7 +200,6 @@ const StageSix = ({ onComplete, onBack }: StageSixProps) => {
                 </button>
               }
               showDownload
-              onAllPagesRead={handleAckDocRead}
             />
           </div>
         </div>
