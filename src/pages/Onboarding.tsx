@@ -11,9 +11,10 @@ import StageFive from "@/components/onboarding/StageFive";
 import StageSix from "@/components/onboarding/StageSix";
 import ContractWelcomeBanner from "@/components/onboarding/ContractWelcomeBanner";
 
-import { ArrowLeft, HelpCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Mail, Clock } from "lucide-react";
 import { useState } from "react";
 import confetti from "@/lib/confetti";
+import { Button } from "@/components/ui/button";
 
 const stageHelpKeys = ["help_personal_info", "help_personal_info", "help_social_security", "help_job_info", "help_family", "help_additional_details"];
 const stageNameKeys = ["stage_basic_details", "stage_documents", "stage_bank_details", "stage_contract", "stage_benefits", "stage_declaration"];
@@ -24,13 +25,16 @@ const Onboarding = () => {
   const { t } = useLanguage();
   const [showContractWelcome, setShowContractWelcome] = useState(false);
   const [showCompletionBanner, setShowCompletionBanner] = useState(false);
-  // Stage 2 banner removed - welcome banner now shows after contract signing only
-  
+  const [showVerificationBanner, setShowVerificationBanner] = useState(false);
 
   const handleNext = (stage: number) => {
     completeStage(stage);
+    // After completing stage 3 (Bank), show verification banner
+    if (stage === 3) {
+      setShowVerificationBanner(true);
+      return;
+    }
     if (stage === 4) {
-      // No welcome banner after contract sign - proceed directly
       setCurrentStage(stage + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -44,6 +48,11 @@ const Onboarding = () => {
     }
   };
 
+  const handleDismissVerification = () => {
+    setShowVerificationBanner(false);
+    setCurrentStage(4);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleDismissContractWelcome = () => {
     setShowContractWelcome(false);
@@ -57,7 +66,42 @@ const Onboarding = () => {
     navigate("/dashboard");
   };
 
-  if (showCompletionBanner) return <ContractWelcomeBanner variant="completion" onContinue={handleDismissCompletion} />;
+  if (showCompletionBanner) return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6"
+      style={{ background: "linear-gradient(135deg, hsl(217 72% 50%) 0%, hsl(217 72% 38%) 50%, hsl(250 60% 35%) 100%)" }}>
+      <div className="relative z-10 text-center space-y-6 max-w-sm">
+        <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center mx-auto">
+          <CheckCircle2 className="w-10 h-10 text-white" />
+        </div>
+        <h1 className="text-2xl font-black text-white">{t("onboarding_complete_title")} 🎉</h1>
+        <p className="text-white/90 text-sm font-medium leading-relaxed">{t("onboarding_complete_desc")}</p>
+        <p className="text-yellow-300 font-bold text-lg tracking-wide">{t("see_you_first_day")} 🧸</p>
+        <Button onClick={handleDismissCompletion} className="h-10 px-8 rounded-xl bg-white text-primary font-bold shadow-lg hover:bg-white/90 gap-2 text-sm">
+          {t("go_to_home_screen")}
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Verification banner after stages 1-3
+  if (showVerificationBanner) return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 smyths-gradient">
+      <div className="bg-card rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-5 text-center">
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+          <Clock className="w-8 h-8 text-primary" />
+        </div>
+        <h2 className="text-lg font-bold text-card-foreground">{t("verification_submitted_title")}</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">{t("verification_submitted_desc")}</p>
+        <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-xl border border-primary/10">
+          <Mail className="w-5 h-5 text-primary shrink-0" />
+          <p className="text-xs text-muted-foreground text-left">{t("verification_email_note")}</p>
+        </div>
+        <Button onClick={handleDismissVerification} className="w-full h-10 rounded-xl font-semibold text-sm">
+          {t("continue_to_contract")}
+        </Button>
+      </div>
+    </div>
+  );
   
   if (showContractWelcome) return <ContractWelcomeBanner onContinue={handleDismissContractWelcome} />;
 
