@@ -1424,7 +1424,34 @@ const OnboardingView = () => {
   const canEdit = activeSection !== 3 && activeSection !== 5;
   const stageNum = activeSection + 1;
   const approvalStatus = data.stageApprovalStatus[stageNum] || "none";
-  const hasRejectedIdentity = Boolean(data.rejectedDocuments?.identityDoc?.rejected);
+  const hasRejectedDocs = Object.values(data.rejectedDocuments || {}).some(d => d.rejected);
+
+  // Profile rejection screen
+  if (data.profileRejected) {
+    return (
+      <div className="min-h-screen bg-card flex flex-col">
+        <div className="sticky top-0 z-20 smyths-gradient px-4 pt-3 pb-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/dashboard")} className="w-7 h-7 rounded-full bg-primary-foreground/15 flex items-center justify-center">
+              <ArrowLeft className="w-3.5 h-3.5 text-primary-foreground" />
+            </button>
+            <img src={smythsLogo} alt="Smyths" className="w-8 h-8 object-contain" />
+            <h1 className="text-primary-foreground font-bold text-sm">{t("my_onboarding")}</h1>
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+            <AlertTriangle className="w-8 h-8 text-destructive" />
+          </div>
+          <h2 className="text-lg font-bold text-card-foreground mb-2">{t("profile_rejected_title")}</h2>
+          <p className="text-sm text-muted-foreground text-center max-w-xs mb-4">{t("profile_rejected_desc")}</p>
+          <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 max-w-xs">
+            <p className="text-xs text-destructive font-medium text-center">{t("profile_rejected_contact")}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-card flex flex-col">
