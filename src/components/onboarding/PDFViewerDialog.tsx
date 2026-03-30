@@ -124,8 +124,8 @@ const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, c
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto p-0">
-        <div className="bg-card p-4">
+      <DialogContent className="max-w-sm max-h-[80vh] overflow-hidden p-0">
+        <div className="bg-card p-4 overflow-y-auto max-h-[75vh]" ref={contentRef} onScroll={handleScroll}>
           {contractContent || pages[currentPage - 1]}
           {!contractContent && (
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
