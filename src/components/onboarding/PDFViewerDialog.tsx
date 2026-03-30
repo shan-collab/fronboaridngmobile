@@ -19,15 +19,30 @@ const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, c
   const [currentPage, setCurrentPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [maxPageReached, setMaxPageReached] = useState(1);
-  const totalPages = 3;
+  const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const totalPages = contractContent ? 1 : 3;
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     if (newPage > maxPageReached) {
       setMaxPageReached(newPage);
     }
-    if (newPage === totalPages && onAllPagesRead) {
+    if (newPage === totalPages && onAllPagesRead && !contractContent) {
       onAllPagesRead();
+    }
+  };
+
+  // For single-page content (like contract), require scroll to bottom
+  const handleScroll = () => {
+    if (contractContent && contentRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      if (scrollTop + clientHeight >= scrollHeight - 10) {
+        if (!hasScrolledToEnd && onAllPagesRead) {
+          setHasScrolledToEnd(true);
+          onAllPagesRead();
+        }
+      }
     }
   };
 
@@ -36,6 +51,7 @@ const PDFViewerDialog = ({ title, onConfirm, confirmed, trigger, showDownload, c
     if (v) {
       setCurrentPage(1);
       setMaxPageReached(1);
+      setHasScrolledToEnd(false);
     }
   };
 
