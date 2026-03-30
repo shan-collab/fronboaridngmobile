@@ -342,14 +342,12 @@ const StageOne = ({ onNext }: StageOneProps) => {
 
       {/* Address Section */}
       <Section icon={MapPin} title={t("address")} helpText={t("help_address")}>
-        <div className="grid grid-cols-2 gap-2.5">
-          <Field label={t("street_number")}>
-            <Input value={data.streetNumber} onChange={e => handleUpdate({ streetNumber: e.target.value })} className="h-8 text-xs" placeholder="e.g. 12" />
-          </Field>
-          <Field label={t("building_identifier")}>
-            <Input value={data.buildingIdentifier} onChange={e => handleUpdate({ buildingIdentifier: e.target.value })} className="h-8 text-xs" placeholder="e.g. Bât. A" />
-          </Field>
-        </div>
+        <Field label={t("street_number")}>
+          <Input value={data.streetNumber} onChange={e => handleUpdate({ streetNumber: e.target.value })} className="h-8 text-xs" placeholder="e.g. 12" />
+        </Field>
+        <Field label={t("building_identifier")}>
+          <Input value={data.buildingIdentifier} onChange={e => handleUpdate({ buildingIdentifier: e.target.value })} className="h-8 text-xs" placeholder="e.g. Bât. A" />
+        </Field>
         <Field label={t("street_name")} required>
           <Textarea 
             value={data.streetName} 
