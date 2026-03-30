@@ -566,6 +566,47 @@ const translations: Record<string, Record<Lang, string>> = {
   "doc_rejected_action_needed": { en: "Action needed", fr: "Action requise" },
   "signatures": { en: "Signatures", fr: "Signatures" },
   "store_manager": { en: "Store Manager", fr: "Responsable de magasin" },
+
+  // Stage 1 - New fields
+  "phone_number": { en: "Phone Number", fr: "Numéro de téléphone" },
+  "enter_phone_number": { en: "Enter phone number", fr: "Entrez le numéro de téléphone" },
+  "underage_block_title": { en: "Onboarding Cannot Be Processed", fr: "L'intégration ne peut pas être traitée" },
+  "underage_block_desc": { en: "You must be at least 16 years old to proceed with onboarding. Please contact your manager for further details.", fr: "Vous devez avoir au moins 16 ans pour procéder à l'intégration. Veuillez contacter votre manager pour plus de détails." },
+  "underage_block_contact": { en: "Age under 16 — Contact your manager for further details", fr: "Moins de 16 ans — Contactez votre manager pour plus de détails" },
+
+  // Stage 2 - New fields
+  "front_image": { en: "Front Image", fr: "Image recto" },
+  "back_image": { en: "Back Image", fr: "Image verso" },
+  "upload_front_hint": { en: "Upload front side of your document", fr: "Téléchargez le recto de votre document" },
+  "upload_back_hint": { en: "Upload back side of your document", fr: "Téléchargez le verso de votre document" },
+  "manual_entry_details": { en: "Document Details (Manual Entry)", fr: "Détails du document (Saisie manuelle)" },
+  "foreign_worker_question": { en: "Are you a foreign worker? (Outside of Schengen space)", fr: "Êtes-vous un travailleur étranger ? (Hors espace Schengen)" },
+
+  // Stage 3 - New IBAN fields
+  "iban_country_code": { en: "Country Code", fr: "Code pays" },
+  "iban_check_digits": { en: "Check Digits", fr: "Clé de contrôle" },
+  "iban_bban": { en: "BBAN", fr: "BBAN" },
+  "bic_code": { en: "BIC / SWIFT Code", fr: "Code BIC / SWIFT" },
+  "account_holding_branch": { en: "Account-Holding Branch", fr: "Agence teneur de compte" },
+  "enter_branch_name": { en: "Enter branch name", fr: "Entrez le nom de l'agence" },
+
+  // Verification banner
+  "verification_submitted_title": { en: "Details Submitted for Verification", fr: "Détails soumis pour vérification" },
+  "verification_submitted_desc": { en: "Your basic details, documents and bank information have been submitted to your Manager / HR for verification. They will review and approve your details soon.", fr: "Vos informations de base, documents et coordonnées bancaires ont été soumis à votre Manager / RH pour vérification. Ils examineront et approuveront vos détails prochainement." },
+  "verification_email_note": { en: "You will be notified via email once the verification is complete.", fr: "Vous serez notifié(e) par e-mail une fois la vérification terminée." },
+  "continue_to_contract": { en: "Continue to Contract", fr: "Continuer vers le contrat" },
+
+  // Auto-tick docs
+  "read_all_pages_to_tick": { en: "Read all pages of each document to automatically mark as completed.", fr: "Lisez toutes les pages de chaque document pour le marquer automatiquement comme lu." },
+  "read_docs_to_agree": { en: "Please read all documents above (all pages) to enable the Agree button.", fr: "Veuillez lire tous les documents ci-dessus (toutes les pages) pour activer le bouton Accepter." },
+  "read_all_docs_to_sign": { en: "Please read all documents above (all pages) before signing.", fr: "Veuillez lire tous les documents ci-dessus (toutes les pages) avant de signer." },
+  "read_health_doc_first": { en: "Please read the health insurance document (all pages) before proceeding.", fr: "Veuillez lire le document d'assurance santé (toutes les pages) avant de continuer." },
+  "insurance_download_note": { en: "The health insurance form must be downloaded and sent directly to the insurance company.", fr: "Le formulaire d'assurance santé doit être téléchargé et envoyé directement à la compagnie d'assurance." },
+
+  // Completion banner
+  "onboarding_complete_title": { en: "Onboarding Complete!", fr: "Intégration terminée !" },
+  "onboarding_complete_desc": { en: "Your onboarding process has been completed successfully. We look forward to seeing you on your first day in store!", fr: "Votre processus d'intégration est terminé avec succès. Nous avons hâte de vous voir lors de votre premier jour en magasin !" },
+  "see_you_first_day": { en: "See you on your first day!", fr: "À bientôt pour votre premier jour !" },
 };
 
 interface LanguageContextType {
