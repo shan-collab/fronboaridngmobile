@@ -156,11 +156,13 @@ const OnboardingView = () => {
     return () => Object.values(previews).forEach(URL.revokeObjectURL);
   }, [data]);
 
+  // Auto-navigate to rejected section
   useEffect(() => {
-    if (data.rejectedDocuments?.identityDoc?.rejected) {
+    const hasRejectedDocs = Object.values(data.rejectedDocuments || {}).some(d => d.rejected);
+    if (hasRejectedDocs) {
       setActiveSection(1);
     }
-  }, [data.rejectedDocuments?.identityDoc?.rejected]);
+  }, [data.rejectedDocuments]);
 
   const FilesView = ({ files, fieldPrefix }: { files: File[]; fieldPrefix: string }) => {
     if (files.length === 0) return <span className="text-[10px] text-muted-foreground italic">{t("not_uploaded")}</span>;
