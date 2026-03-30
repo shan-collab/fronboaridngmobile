@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import { CalendarIcon, FileText, Shield, CreditCard, AlertCircle, Sparkles } from "lucide-react";
 import MultiFileUpload from "./MultiFileUpload";
 import { useState, useMemo, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import idFrontSample from "@/assets/id-front-sample.png";
 import idBackSample from "@/assets/id-back-sample.png";
