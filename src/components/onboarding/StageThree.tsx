@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Landmark, Shield, CheckCircle2 } from "lucide-react";
 import MultiFileUpload from "./MultiFileUpload";
-import MaskedInput from "./MaskedInput";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
@@ -21,18 +20,18 @@ const StageThree = ({ onNext, onBack }: StageThreeProps) => {
     if (Object.keys(errors).length > 0) setErrors({});
   };
 
-  const validateIBAN = (iban: string) => {
-    const cleaned = iban.replace(/\s/g, "").toUpperCase();
-    return cleaned.length >= 15 && cleaned.length <= 34 && /^[A-Z]{2}[0-9]{2}/.test(cleaned);
-  };
-
   const isValid = useMemo(() => {
-    return !!data.iban;
-  }, [data.iban]);
+    return !!(data.ibanCountryCode && data.ibanCheckDigits && data.ibanBBAN && data.bic && data.accountHoldingBranch && data.ribDocument.length > 0);
+  }, [data.ibanCountryCode, data.ibanCheckDigits, data.ibanBBAN, data.bic, data.accountHoldingBranch, data.ribDocument]);
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!data.iban || !validateIBAN(data.iban)) e.iban = t("iban") + " — " + t("required");
+    if (!data.ibanCountryCode) e.ibanCountryCode = t("required");
+    if (!data.ibanCheckDigits) e.ibanCheckDigits = t("required");
+    if (!data.ibanBBAN) e.ibanBBAN = t("required");
+    if (!data.bic) e.bic = t("required");
+    if (!data.accountHoldingBranch) e.accountHoldingBranch = t("required");
+    if (data.ribDocument.length === 0) e.ribDocument = t("required");
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -46,14 +45,67 @@ const StageThree = ({ onNext, onBack }: StageThreeProps) => {
         <h3 className="font-semibold text-sm text-card-foreground">{t("bank_info")}</h3>
       </div>
 
-      <div className="space-y-1">
+      {/* IBAN in 3 boxes */}
+      <div className="space-y-2">
         <Label className="text-xs text-muted-foreground">{t("iban")} <span className="text-destructive">*</span></Label>
-        <MaskedInput value={data.iban} onChange={v => handleUpdate({ iban: v })} placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" className={errors.iban ? "border-destructive" : ""} />
+        <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground">{t("iban_country_code")}</Label>
+            <Input 
+              value={data.ibanCountryCode} 
+              onChange={e => handleUpdate({ ibanCountryCode: e.target.value.toUpperCase().slice(0, 2) })} 
+              placeholder="FR" 
+              maxLength={2}
+              className={cn("h-8 text-xs text-center uppercase", errors.ibanCountryCode && "border-destructive")} 
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground">{t("iban_check_digits")}</Label>
+            <Input 
+              value={data.ibanCheckDigits} 
+              onChange={e => handleUpdate({ ibanCheckDigits: e.target.value.replace(/\D/g, "").slice(0, 2) })} 
+              placeholder="76" 
+              maxLength={2}
+              className={cn("h-8 text-xs text-center", errors.ibanCheckDigits && "border-destructive")} 
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground">{t("iban_bban")}</Label>
+            <Input 
+              value={data.ibanBBAN} 
+              onChange={e => handleUpdate({ ibanBBAN: e.target.value.toUpperCase() })} 
+              placeholder="XXXX XXXX XXXX" 
+              className={cn("h-8 text-xs", errors.ibanBBAN && "border-destructive")} 
+            />
+          </div>
+        </div>
         <p className="text-[10px] text-muted-foreground">{t("iban_hint")}</p>
-        {errors.iban && <p className="text-[11px] text-destructive">{errors.iban}</p>}
       </div>
 
-      <MultiFileUpload label={t("rib_document")} files={data.ribDocument} onFilesChange={f => handleUpdate({ ribDocument: f })} hint={t("upload_rib")} />
+      {/* BIC */}
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("bic_code")} <span className="text-destructive">*</span></Label>
+        <Input 
+          value={data.bic} 
+          onChange={e => handleUpdate({ bic: e.target.value.toUpperCase() })} 
+          placeholder="e.g. BNPAFRPP" 
+          className={cn("h-8 text-xs uppercase", errors.bic && "border-destructive")} 
+        />
+      </div>
+
+      {/* Account Holding Branch */}
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("account_holding_branch")} <span className="text-destructive">*</span></Label>
+        <Input 
+          value={data.accountHoldingBranch} 
+          onChange={e => handleUpdate({ accountHoldingBranch: e.target.value })} 
+          placeholder={t("enter_branch_name")} 
+          className={cn("h-8 text-xs", errors.accountHoldingBranch && "border-destructive")} 
+        />
+      </div>
+
+      {/* RIB Document - Mandatory */}
+      <MultiFileUpload label={`${t("rib_document")} *`} files={data.ribDocument} onFilesChange={f => handleUpdate({ ribDocument: f })} hint={t("upload_rib")} error={errors.ribDocument} />
 
       {/* Bank Verification - hardcoded green tick after upload */}
       {showBankVerification && (

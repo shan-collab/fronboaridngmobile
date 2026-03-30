@@ -9,8 +9,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { CalendarIcon, User, Briefcase, MapPin, Phone, CreditCard, Shield, Plus, Trash2, Users, ClipboardList, Zap, Sparkles } from "lucide-react";
+import { format, differenceInYears } from "date-fns";
+import { CalendarIcon, User, Briefcase, MapPin, Phone, CreditCard, Shield, Plus, Trash2, Users, ClipboardList, Zap, Sparkles, AlertTriangle } from "lucide-react";
 import MultiFileUpload from "./MultiFileUpload";
 import MaskedInput from "./MaskedInput";
 import HelpIcon from "./HelpIcon";
@@ -73,6 +73,7 @@ const StageOne = ({ onNext }: StageOneProps) => {
   const { t } = useLanguage();
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [showQuickFill, setShowQuickFill] = useState(false);
+  const [underageBlocked, setUnderageBlocked] = useState(false);
 
   useEffect(() => {
     if (!data.birthName && data.firstName && data.lastName) {
@@ -85,6 +86,16 @@ const StageOne = ({ onNext }: StageOneProps) => {
   const handleUpdate = (updates: Partial<typeof data>) => {
     updateData(updates);
   };
+
+  // Check age when DOB changes
+  useEffect(() => {
+    if (data.dateOfBirth) {
+      const age = differenceInYears(new Date(), data.dateOfBirth);
+      setUnderageBlocked(age < 16);
+    } else {
+      setUnderageBlocked(false);
+    }
+  }, [data.dateOfBirth]);
 
   const addEmergencyContact = () => {
     if (data.emergencyContacts.length >= 2) return;
@@ -123,18 +134,19 @@ const StageOne = ({ onNext }: StageOneProps) => {
   };
 
   const isValid = useMemo(() => {
+    if (underageBlocked) return false;
     const hasEmergency = data.emergencyContacts.length > 0 &&
       data.emergencyContacts[0].name && data.emergencyContacts[0].phone && data.emergencyContacts[0].relationship;
-    const hasAddress = data.streetAddress;
+    const hasAddress = data.streetName;
     const hasSS = data.hasSocialSecurity === "yes"
       ? (data.socialSecurityNumber && data.socialSecurityProof.length > 0)
       : data.hasSocialSecurity === "no"
         ? true
         : false;
-    return !!(data.firstName && data.lastName && data.birthName && data.dateOfBirth && data.gender &&
+    return !!(data.firstName && data.lastName && data.birthName && data.dateOfBirth && data.placeOfBirth && data.gender &&
       data.nationality && data.email && data.mobileNumber && hasAddress &&
       data.city && data.postalCode && hasEmergency && hasSS);
-  }, [data]);
+  }, [data, underageBlocked]);
 
   const showErr = (field: string, value: any) => touched[field] && !value;
 
@@ -152,6 +164,24 @@ const StageOne = ({ onNext }: StageOneProps) => {
   ];
 
   const cityOptions = cityOptionsMap[data.country] || [];
+
+  // Underage block screen
+  if (underageBlocked) {
+    return (
+      <div className="space-y-6 py-8">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-destructive" />
+          </div>
+          <h2 className="text-lg font-bold text-card-foreground">{t("underage_block_title")}</h2>
+          <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">{t("underage_block_desc")}</p>
+          <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 max-w-xs">
+            <p className="text-xs text-destructive font-medium">{t("underage_block_contact")}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -205,12 +235,12 @@ const StageOne = ({ onNext }: StageOneProps) => {
                         placeOfBirth: "Lyon",
                         birthDepartmentNumber: "69",
                         nationality: "French",
-                        streetAddress: "12 Rue de la République",
+                        streetNumber: "12",
+                        streetName: "Rue de la République",
                         city: "Lyon",
                         postalCode: "69002",
                         country: "France",
                       });
-                      // Auto-collapse and show toast
                       setShowQuickFill(false);
                       toast.success(t("autofill_applied"), { duration: 3000 });
                     }
@@ -254,8 +284,8 @@ const StageOne = ({ onNext }: StageOneProps) => {
                </PopoverContent>
              </Popover>
            </Field>
-           <Field label={t("place_of_birth")}>
-             <Input value={data.placeOfBirth} onChange={e => handleUpdate({ placeOfBirth: e.target.value })} className="h-8 text-xs" placeholder={t("city")} />
+           <Field label={t("place_of_birth")} required>
+             <Input value={data.placeOfBirth} onChange={e => handleUpdate({ placeOfBirth: e.target.value })} onBlur={() => touch("placeOfBirth")} className={cn("h-8 text-xs", showErr("placeOfBirth", data.placeOfBirth) && "border-destructive")} placeholder={t("city")} />
           </Field>
         </div>
         <Field label={t("birth_department_number")}>
@@ -303,14 +333,8 @@ const StageOne = ({ onNext }: StageOneProps) => {
             {t("email_for_adp")}
           </Label>
         </div>
-        <Field label={t("mobile")} required>
-          <div className="flex gap-2">
-             <Select value={data.mobileCode} onValueChange={v => handleUpdate({ mobileCode: v })}>
-               <SelectTrigger className="w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
-               <SelectContent>{["+33", "+44", "+49", "+34", "+39", "+1"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-             </Select>
-             <Input value={data.mobileNumber} onChange={e => handleUpdate({ mobileNumber: e.target.value })} className="flex-1 h-8 text-xs" />
-          </div>
+        <Field label={t("phone_number")} required>
+          <Input value={data.mobileNumber} onChange={e => handleUpdate({ mobileNumber: e.target.value })} className="h-8 text-xs" placeholder={t("enter_phone_number")} />
         </Field>
       </Section>
 
@@ -318,13 +342,21 @@ const StageOne = ({ onNext }: StageOneProps) => {
 
       {/* Address Section */}
       <Section icon={MapPin} title={t("address")} helpText={t("help_address")}>
-        <Field label={t("street")} required>
+        <div className="grid grid-cols-2 gap-2.5">
+          <Field label={t("street_number")}>
+            <Input value={data.streetNumber} onChange={e => handleUpdate({ streetNumber: e.target.value })} className="h-8 text-xs" placeholder="e.g. 12" />
+          </Field>
+          <Field label={t("building_identifier")}>
+            <Input value={data.buildingIdentifier} onChange={e => handleUpdate({ buildingIdentifier: e.target.value })} className="h-8 text-xs" placeholder="e.g. Bât. A" />
+          </Field>
+        </div>
+        <Field label={t("street_name")} required>
           <Textarea 
-            value={data.streetAddress} 
-            onChange={e => handleUpdate({ streetAddress: e.target.value })} 
-            onBlur={() => touch("streetAddress")} 
-            className={cn("text-xs min-h-[5rem] resize-none", showErr("streetAddress", data.streetAddress) && "border-destructive")} 
-            placeholder="e.g. 12, Bât. A, Rue de Rivoli" 
+            value={data.streetName} 
+            onChange={e => handleUpdate({ streetName: e.target.value })} 
+            onBlur={() => touch("streetName")} 
+            className={cn("text-xs min-h-[5rem] resize-none", showErr("streetName", data.streetName) && "border-destructive")} 
+            placeholder="e.g. Rue de la République" 
             rows={3}
           />
         </Field>
@@ -465,14 +497,8 @@ const StageOne = ({ onNext }: StageOneProps) => {
             <Field label={t("contact_name")} required>
               <Input value={contact.name} onChange={e => updateEmergencyContact(idx, "name", e.target.value)} className="h-8 text-xs" />
             </Field>
-            <Field label={t("contact_phone")} required>
-              <div className="flex gap-2">
-                 <Select value={contact.phoneCode} onValueChange={v => updateEmergencyContact(idx, "phoneCode", v)}>
-                   <SelectTrigger className="w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
-                   <SelectContent>{["+33", "+44", "+49", "+34", "+39", "+1"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                 </Select>
-                 <Input value={contact.phone} onChange={e => updateEmergencyContact(idx, "phone", e.target.value)} className="flex-1 h-8 text-xs" />
-              </div>
+            <Field label={t("phone_number")} required>
+              <Input value={contact.phone} onChange={e => updateEmergencyContact(idx, "phone", e.target.value)} className="h-8 text-xs" placeholder={t("enter_phone_number")} />
             </Field>
             <Field label={t("relationship")} required>
               <Select value={contact.relationship} onValueChange={v => updateEmergencyContact(idx, "relationship", v)}>
