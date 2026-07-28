@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Search, ShieldCheck, UserPlus, Loader2, CheckCircle2, Info } from "lucide-react";
+import { Search, ShieldCheck, UserPlus, Loader2, CheckCircle2, Info, Check, X, ArrowLeft } from "lucide-react";
+import MultiFileUpload from "./MultiFileUpload";
 
 export type LookupState = "idle" | "found" | "new";
 
@@ -11,6 +12,8 @@ interface SSNLookupProps {
   value: string;
   onChange: (v: string) => void;
   state: LookupState;
+  proofFiles: File[];
+  onProofChange: (files: File[]) => void;
   onFound: (ssn: string) => void;
   onNewHire: (ssn: string) => void;
   onReset: () => void;
@@ -27,6 +30,14 @@ interface SSNLookupProps {
     newDesc: string;
     change: string;
     format: string;
+    question: string;
+    yes: string;
+    no: string;
+    yesHint: string;
+    noHint: string;
+    back: string;
+    uploadProof: string;
+    proofHint: string;
   };
 }
 
@@ -39,8 +50,9 @@ const formatNir = (raw: string) => {
   return parts.filter(Boolean).join(" ");
 };
 
-const SSNLookup = ({ value, onChange, state, onFound, onNewHire, onReset, labels }: SSNLookupProps) => {
+const SSNLookup = ({ value, onChange, state, proofFiles, onProofChange, onFound, onNewHire, onReset, labels }: SSNLookupProps) => {
   const [searching, setSearching] = useState(false);
+  const [answer, setAnswer] = useState<"" | "yes" | "no">("");
   const digits = value.replace(/\D/g, "");
   const canSearch = digits.length >= 13;
 
@@ -51,6 +63,11 @@ const SSNLookup = ({ value, onChange, state, onFound, onNewHire, onReset, labels
       if (KNOWN_RECORDS.includes(digits)) onFound(digits);
       else onNewHire(digits);
     }, 900);
+  };
+
+  const handleReset = () => {
+    setAnswer("");
+    onReset();
   };
 
   if (state !== "idle") {
@@ -70,7 +87,7 @@ const SSNLookup = ({ value, onChange, state, onFound, onNewHire, onReset, labels
             </p>
           )}
         </div>
-        <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] shrink-0" onClick={onReset}>
+        <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] shrink-0" onClick={handleReset}>
           {labels.change}
         </Button>
       </div>
@@ -89,30 +106,76 @@ const SSNLookup = ({ value, onChange, state, onFound, onNewHire, onReset, labels
         </div>
       </div>
 
-      <div className="space-y-1">
-        <Label className="text-[11px] text-muted-foreground">{labels.ssnLabel}<span className="text-destructive ml-0.5">*</span></Label>
-        <div className="flex gap-2">
-          <Input
-            value={formatNir(value)}
-            onChange={e => onChange(e.target.value.replace(/\D/g, ""))}
-            placeholder={labels.placeholder}
-            inputMode="numeric"
-            className="h-9 text-xs font-mono tracking-wider"
-          />
-          <Button onClick={runSearch} disabled={!canSearch || searching} className="h-9 px-3 text-xs gap-1.5 shrink-0">
-            {searching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-            {labels.search}
-          </Button>
+      {answer === "" && (
+        <div className="space-y-2">
+          <Label className="text-[11px] font-medium text-card-foreground">
+            {labels.question}<span className="text-destructive ml-0.5">*</span>
+          </Label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setAnswer("yes")}
+              className="rounded-xl border border-border bg-card p-2.5 text-left hover:border-primary hover:bg-primary/5 transition-colors"
+            >
+              <div className="flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-[11px] font-semibold text-card-foreground">{labels.yes}</span>
+              </div>
+              <p className="text-[9px] text-muted-foreground mt-0.5 leading-snug">{labels.yesHint}</p>
+            </button>
+            <button
+              onClick={() => { setAnswer("no"); onNewHire(""); }}
+              className="rounded-xl border border-border bg-card p-2.5 text-left hover:border-primary hover:bg-primary/5 transition-colors"
+            >
+              <div className="flex items-center gap-1.5">
+                <X className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-[11px] font-semibold text-card-foreground">{labels.no}</span>
+              </div>
+              <p className="text-[9px] text-muted-foreground mt-0.5 leading-snug">{labels.noHint}</p>
+            </button>
+          </div>
         </div>
-        <p className="text-[9px] text-muted-foreground flex items-center gap-1"><Info className="w-2.5 h-2.5" /> {labels.format}</p>
-      </div>
+      )}
 
-      <button
-        onClick={() => onNewHire("")}
-        className="w-full text-[10px] font-medium text-primary underline underline-offset-2 py-1"
-      >
-        {labels.noSsn}
-      </button>
+      {answer === "yes" && (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-[11px] text-muted-foreground">{labels.ssnLabel}<span className="text-destructive ml-0.5">*</span></Label>
+            <div className="flex gap-2">
+              <Input
+                value={formatNir(value)}
+                onChange={e => onChange(e.target.value.replace(/\D/g, ""))}
+                placeholder={labels.placeholder}
+                inputMode="numeric"
+                className="h-9 text-xs font-mono tracking-wider"
+              />
+              <Button onClick={runSearch} disabled={!canSearch || searching} className="h-9 px-3 text-xs gap-1.5 shrink-0">
+                {searching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                {labels.search}
+              </Button>
+            </div>
+            <p className="text-[9px] text-muted-foreground flex items-center gap-1"><Info className="w-2.5 h-2.5" /> {labels.format}</p>
+          </div>
+
+          <MultiFileUpload
+            label={labels.uploadProof}
+            files={proofFiles}
+            onFilesChange={onProofChange}
+            hint={labels.proofHint}
+          />
+
+          <div className="flex items-center justify-between">
+            <button onClick={() => setAnswer("")} className="text-[10px] text-muted-foreground flex items-center gap-1 py-1">
+              <ArrowLeft className="w-2.5 h-2.5" /> {labels.back}
+            </button>
+            <button
+              onClick={() => { setAnswer("no"); onNewHire(""); }}
+              className="text-[10px] font-medium text-primary underline underline-offset-2 py-1"
+            >
+              {labels.noSsn}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
