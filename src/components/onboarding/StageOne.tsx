@@ -177,18 +177,17 @@ const StageOne = ({ onNext }: StageOneProps) => {
 
   const isValid = useMemo(() => {
     if (underageBlocked) return false;
+    if (lookupState === "idle") return false;
     const hasEmergency = data.emergencyContacts.length > 0 &&
       data.emergencyContacts[0].name && data.emergencyContacts[0].phone && data.emergencyContacts[0].relationship;
     const hasAddress = data.streetName;
-    const hasSS = data.hasSocialSecurity === "yes"
-      ? (data.socialSecurityNumber && data.socialSecurityProof.length > 0)
-      : data.hasSocialSecurity === "no"
-        ? true
-        : false;
+    const hasSS = data.socialSecurityNumber
+      ? data.socialSecurityProof.length > 0
+      : true;
     return !!(data.firstName && data.lastName && data.birthName && data.dateOfBirth && data.placeOfBirth && data.gender &&
       data.nationality && data.email && data.mobileNumber && hasAddress &&
       data.city && data.postalCode && hasEmergency && hasSS);
-  }, [data, underageBlocked]);
+  }, [data, underageBlocked, lookupState]);
 
   const showErr = (field: string, value: any) => touched[field] && !value;
 
