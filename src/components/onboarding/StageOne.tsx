@@ -231,6 +231,8 @@ const StageOne = ({ onNext }: StageOneProps) => {
         value={ssnInput}
         onChange={setSsnInput}
         state={lookupState}
+        proofFiles={data.socialSecurityProof}
+        onProofChange={f => updateData({ socialSecurityProof: f })}
         onFound={handleRecordFound}
         onNewHire={handleNewHire}
         onReset={handleResetLookup}
@@ -247,6 +249,14 @@ const StageOne = ({ onNext }: StageOneProps) => {
           newDesc: t("ssn_new_desc"),
           change: t("change"),
           format: t("ssn_format_hint"),
+          question: t("ssn_have_question"),
+          yes: t("yes"),
+          no: t("no"),
+          yesHint: t("ssn_have_yes_hint"),
+          noHint: t("ssn_have_no_hint"),
+          back: t("back"),
+          uploadProof: t("upload_ss_proof"),
+          proofHint: t("cpam_proof"),
         }}
       />
 
