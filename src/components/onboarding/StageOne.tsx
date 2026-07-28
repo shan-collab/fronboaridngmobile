@@ -13,6 +13,7 @@ import { format, differenceInYears } from "date-fns";
 import { CalendarIcon, User, Briefcase, MapPin, Phone, CreditCard, Shield, Plus, Trash2, Users, ClipboardList, Zap, Sparkles, AlertTriangle } from "lucide-react";
 import MultiFileUpload from "./MultiFileUpload";
 import MaskedInput from "./MaskedInput";
+import SSNLookup, { LookupState } from "./SSNLookup";
 import HelpIcon from "./HelpIcon";
 import { useState, useMemo, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,6 +75,47 @@ const StageOne = ({ onNext }: StageOneProps) => {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [showQuickFill, setShowQuickFill] = useState(false);
   const [underageBlocked, setUnderageBlocked] = useState(false);
+  const [lookupState, setLookupState] = useState<LookupState>("idle");
+  const [ssnInput, setSsnInput] = useState("");
+
+  const handleRecordFound = (ssn: string) => {
+    setLookupState("found");
+    updateData({
+      socialSecurityNumber: ssn,
+      hasSocialSecurity: "yes",
+      title: "Mr",
+      firstName: "John",
+      lastName: "Doe",
+      birthName: "John Doe",
+      gender: "Male",
+      dateOfBirth: new Date("1993-05-31"),
+      placeOfBirth: "Lyon",
+      birthDepartmentNumber: "69",
+      nationality: "French",
+      email: "john.doe@smythstoys.com",
+      mobileNumber: "612345678",
+      streetNumber: "12",
+      streetName: "Rue de la République",
+      city: "Lyon",
+      postalCode: "69002",
+      country: "France",
+    });
+    toast.success(t("ssn_found_title"), { duration: 3000 });
+  };
+
+  const handleNewHire = (ssn: string) => {
+    setLookupState("new");
+    updateData({
+      socialSecurityNumber: ssn,
+      hasSocialSecurity: ssn ? "yes" : "no",
+    });
+  };
+
+  const handleResetLookup = () => {
+    setLookupState("idle");
+    setSsnInput("");
+    updateData({ socialSecurityNumber: "", hasSocialSecurity: "" });
+  };
 
   useEffect(() => {
     if (!data.birthName && data.firstName && data.lastName) {
@@ -135,18 +177,17 @@ const StageOne = ({ onNext }: StageOneProps) => {
 
   const isValid = useMemo(() => {
     if (underageBlocked) return false;
+    if (lookupState === "idle") return false;
     const hasEmergency = data.emergencyContacts.length > 0 &&
       data.emergencyContacts[0].name && data.emergencyContacts[0].phone && data.emergencyContacts[0].relationship;
     const hasAddress = data.streetName;
-    const hasSS = data.hasSocialSecurity === "yes"
-      ? (data.socialSecurityNumber && data.socialSecurityProof.length > 0)
-      : data.hasSocialSecurity === "no"
-        ? true
-        : false;
+    const hasSS = data.socialSecurityNumber
+      ? data.socialSecurityProof.length > 0
+      : true;
     return !!(data.firstName && data.lastName && data.birthName && data.dateOfBirth && data.placeOfBirth && data.gender &&
       data.nationality && data.email && data.mobileNumber && hasAddress &&
       data.city && data.postalCode && hasEmergency && hasSS);
-  }, [data, underageBlocked]);
+  }, [data, underageBlocked, lookupState]);
 
   const showErr = (field: string, value: any) => touched[field] && !value;
 
@@ -185,6 +226,32 @@ const StageOne = ({ onNext }: StageOneProps) => {
 
   return (
     <div className="space-y-4">
+      {/* Step 0 — Social security lookup gate */}
+      <SSNLookup
+        value={ssnInput}
+        onChange={setSsnInput}
+        state={lookupState}
+        onFound={handleRecordFound}
+        onNewHire={handleNewHire}
+        onReset={handleResetLookup}
+        labels={{
+          title: t("ssn_lookup_title"),
+          subtitle: t("ssn_lookup_subtitle"),
+          ssnLabel: t("ssn"),
+          placeholder: "1 93 05 31 691 234 91",
+          search: t("ssn_lookup_search"),
+          noSsn: t("ssn_lookup_no_ssn"),
+          foundTitle: t("ssn_found_title"),
+          foundDesc: t("ssn_found_desc"),
+          newTitle: t("ssn_new_title"),
+          newDesc: t("ssn_new_desc"),
+          change: t("change"),
+          format: t("ssn_format_hint"),
+        }}
+      />
+
+      {lookupState !== "idle" && (
+      <>
       {/* Personal Information */}
       <Section icon={User} title={t("personal_info")} helpText={t("help_personal_info")}>
         {/* Quick Fill Feature */}
@@ -401,21 +468,12 @@ const StageOne = ({ onNext }: StageOneProps) => {
 
       {/* Social Security Detail */}
       <Section icon={CreditCard} title={t("social_security_detail")} helpText={t("help_social_security")}>
-        <Field label={t("ssn_question")} required>
-          <RadioGroup value={data.hasSocialSecurity} onValueChange={v => handleUpdate({ hasSocialSecurity: v })} className="space-y-2">
-            <div className="flex items-center gap-2"><RadioGroupItem value="yes" id="ss-yes" /><Label htmlFor="ss-yes" className="text-xs cursor-pointer">{t("yes")}</Label></div>
-            <div className="flex items-center gap-2"><RadioGroupItem value="no" id="ss-no" /><Label htmlFor="ss-no" className="text-xs cursor-pointer">{t("no")}</Label></div>
-          </RadioGroup>
+        <Field label={t("ssn")} required={data.hasSocialSecurity === "yes"}>
+          <MaskedInput value={data.socialSecurityNumber} onChange={v => handleUpdate({ socialSecurityNumber: v, hasSocialSecurity: v ? "yes" : "no" })} placeholder="Enter your NIR" />
         </Field>
-        {data.hasSocialSecurity === "yes" && (
-          <div className="space-y-2">
-            <Field label={t("ssn")} required>
-              <MaskedInput value={data.socialSecurityNumber} onChange={v => handleUpdate({ socialSecurityNumber: v })} placeholder="Enter your NIR" />
-            </Field>
-            <MultiFileUpload label={t("upload_ss_proof")} files={data.socialSecurityProof} onFilesChange={f => handleUpdate({ socialSecurityProof: f })} hint={t("cpam_proof")} />
-          </div>
-        )}
-        {data.hasSocialSecurity === "no" && (
+        {data.hasSocialSecurity === "yes" && data.socialSecurityNumber ? (
+          <MultiFileUpload label={t("upload_ss_proof")} files={data.socialSecurityProof} onFilesChange={f => handleUpdate({ socialSecurityProof: f })} hint={t("cpam_proof")} />
+        ) : (
           <div className="flex items-start gap-2 p-2.5 bg-muted/30 rounded-lg border border-border">
             <Shield className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-[10px] text-muted-foreground leading-relaxed">{t("add_ssn_later")}</p>
@@ -563,6 +621,8 @@ const StageOne = ({ onNext }: StageOneProps) => {
       <Button onClick={onNext} disabled={!isValid} className="w-full h-8 rounded-lg text-xs font-semibold disabled:opacity-40">
         {t("save_continue")}
       </Button>
+      </>
+      )}
     </div>
   );
 };
